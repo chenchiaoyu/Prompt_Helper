@@ -1,0 +1,6 @@
+{
+  "name": "提示詞窮救星 PROMPT Helper",
+  "description": "提示詞窮救星 PROMPT Helper (MJ • UNIVERSAL AI) - 提供豐富的攝影、藝術流派、媒材與構圖關鍵字，快速組合 AI 算圖提示詞與 Midjourney / 通用 AI 參數",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
