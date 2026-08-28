@@ -1,12 +1,12 @@
 # 提示詞窮救星 PROMPT Helper (MJ • UNIVERSAL AI)
 
-[![Deploy to GitHub Pages](https://github.com/chenchiaoyu/midjourney_Prompt/actions/workflows/deploy.yml/badge.svg)](https://github.com/chenchiaoyu/midjourney_Prompt/actions/workflows/deploy.yml)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen?logo=github)](https://chenchiaoyu.github.io/midjourney_Prompt/)
+[![Deploy to GitHub Pages](https://github.com/chenchiaoyu/Prompt_Helper/actions/workflows/deploy.yml/badge.svg)](https://github.com/chenchiaoyu/Prompt_Helper/actions/workflows/deploy.yml)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen?logo=github)](https://chenchiaoyu.github.io/Prompt_Helper/)
 
 專為 Midjourney (V8.2, V7, V6.1, Niji 7) 與通用自然語言 AI 模型量身打造的美學提示詞生成與調校工具。
 
 ## 🌐 線上展示 (Live Demo)
-👉 [https://chenchiaoyu.github.io/midjourney_Prompt/](https://chenchiaoyu.github.io/midjourney_Prompt/)
+👉 [https://chenchiaoyu.github.io/Prompt_Helper/](https://chenchiaoyu.github.io/Prompt_Helper/)
 
 ## ✨ 特色功能
 - **全版本模型支援**：Midjourney V8.2、V7、V6.1、Niji 7 及 Universal AI 自然語言模式。
