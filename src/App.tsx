@@ -1593,11 +1593,11 @@ export default function AestheticPromptMaster() {
               ({positiveCount} positive, {negativeCount} negative)
             </span>
           </div>
-          <div className="font-mono text-xs md:text-sm leading-snug line-clamp-2 text-[#A1A1AA] select-all">
+          <div className="text-xs md:text-sm leading-snug line-clamp-2 select-all">
             {finalPrompt ? (
-              <span style={{ fontFamily: 'Huninn, sans-serif', fontWeight: 'bold', fontSize: '15px', lineHeight: '25.25px', textAlign: 'left', fontStyle: 'normal' }}>{finalPrompt}</span>
+              <span className="text-white font-mono text-[14px] leading-[19.25px] font-normal border-0" style={{ color: '#ffffff', fontFamily: 'monospace', fontSize: '14px', lineHeight: '19.25px', fontWeight: 'normal', borderWidth: '0px' }}>{finalPrompt}</span>
             ) : (
-              <span className="text-gray-400 italic" style={{ fontFamily: 'Huninn, sans-serif', fontWeight: 'bold', fontSize: '15px', lineHeight: '25.25px', textAlign: 'left', fontStyle: 'normal' }}>
+              <span className="text-gray-300 italic font-mono text-[14px] leading-[19.25px] font-normal border-0" style={{ fontFamily: 'monospace', fontSize: '14px', lineHeight: '19.25px', fontWeight: 'normal', borderWidth: '0px' }}>
                 尚未選取提示詞，請點選上方標籤或輸入主體描述以即時合成 Prompt...
               </span>
             )}
