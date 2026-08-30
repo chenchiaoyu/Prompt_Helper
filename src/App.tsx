@@ -18,7 +18,8 @@ import {
   Shapes,
   Brush,
   ShieldAlert,
-  Maximize2
+  Maximize2,
+  HelpCircle
 } from 'lucide-react';
 
 import { 
@@ -27,12 +28,15 @@ import {
   promptDatabase, 
   midjourneyVersions,
   NoiseLevel,
-  noiseOptions
+  noiseOptions,
+  PromptItem
 } from './data/promptDatabase';
 import { SubCategoryAccordion } from './components/SubCategoryAccordion';
 import { MobileCategoryNav } from './components/MobileCategoryNav';
 import { MobilePromptModal } from './components/MobilePromptModal';
 import { ParameterPanel } from './components/ParameterPanel';
+import { PromptDetailModal } from './components/PromptDetailModal';
+import { UserGuideModal } from './components/UserGuideModal';
 
 const sidebarIconMap: Record<string, React.ElementType> = {
   Package,
@@ -57,6 +61,8 @@ export default function AestheticPromptMaster() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+  const [isUserGuideOpen, setIsUserGuideOpen] = useState(false);
+  const [inspectingItem, setInspectingItem] = useState<(PromptItem & { categoryId?: string; subCategory?: string }) | null>(null);
 
   // State: Parameters
   const [subjectText, setSubjectText] = useState('');
@@ -381,14 +387,25 @@ export default function AestheticPromptMaster() {
           </div>
           <div>
             <h1 className="text-xs sm:text-base font-bold tracking-tight text-[#18181B] flex items-center gap-1.5 sm:gap-2">
-              <span>提示詞窮救星</span>
-              <span className="font-semibold text-[10px] sm:text-xs text-gray-500 font-mono">PROMPT Helper</span>
+              <span>提示詞窮救星-Universal</span>
+              <span className="font-semibold text-[10px] sm:text-xs text-gray-500 font-mono">Prompt Helper</span>
             </h1>
           </div>
         </div>
 
-        {/* Engine Switcher & Search */}
+        {/* Engine Switcher, Search & User Guide */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* User Guide Button */}
+          <button
+            type="button"
+            onClick={() => setIsUserGuideOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-[#E4E4E7] bg-white hover:bg-gray-100 text-[#18181B] shadow-2xs transition cursor-pointer"
+            title="查看新手使用說明與秘笈"
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="hidden xs:inline sm:inline">使用指南</span>
+          </button>
+
           {/* Engine Mode Toggle */}
           <div className="flex bg-[#F4F4F5] p-0.5 rounded-lg border border-[#E4E4E7]">
             <button
@@ -416,7 +433,7 @@ export default function AestheticPromptMaster() {
           </div>
 
           {/* Search Box */}
-          <div className="relative w-32 sm:w-48">
+          <div className="relative w-28 sm:w-44 md:w-48">
             <Search className="w-3 h-3 sm:w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
@@ -676,16 +693,32 @@ export default function AestheticPromptMaster() {
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-200 text-gray-700">
                               {promptDatabase[item.categoryId]?.name.split('與')[0].slice(0, 4)}
                             </span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1">
+                              {/* Google 實物參考搜尋 (地球圖示) */}
                               <button
                                 type="button"
                                 onClick={(e) => handleGoogleSearchStyle(e, item)}
-                                className="w-5 h-5 rounded-full bg-gray-200/60 hover:bg-[#18181B] hover:text-white flex items-center justify-center text-gray-500"
+                                title={`在 Google 搜尋「${item.label}」實物參考與風格解析`}
+                                className="w-5 h-5 rounded-full bg-gray-200/60 hover:bg-blue-600 hover:text-white flex items-center justify-center text-gray-500 transition cursor-pointer"
+                              >
+                                <Globe className="w-3 h-3 stroke-[2.2]" />
+                              </button>
+
+                              {/* 完整提示詞檢視 (ℹ️ 圖示) */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInspectingItem(item);
+                                }}
+                                title={`查看「${item.label}」完整英文提示詞`}
+                                className="w-5 h-5 rounded-full bg-gray-200/60 hover:bg-[#18181B] hover:text-white flex items-center justify-center text-gray-500 transition cursor-pointer"
                               >
                                 <Info className="w-3 h-3 stroke-[2.5]" />
                               </button>
+
                               {isSelected && (
-                                <span className="w-4 h-4 rounded-full bg-white text-black flex items-center justify-center">
+                                <span className="w-4 h-4 rounded-full bg-white text-black flex items-center justify-center shrink-0 ml-0.5">
                                   <Check className="w-2.5 h-2.5 stroke-[3]" />
                                 </span>
                               )}
@@ -725,6 +758,14 @@ export default function AestheticPromptMaster() {
                       isCollapsed={isCollapsed}
                       onToggleCollapse={() => toggleSubCategoryCollapse(subCat.id)}
                       onGoogleSearch={handleGoogleSearchStyle}
+                      onInspectPrompt={(e, item) => {
+                        e.stopPropagation();
+                        setInspectingItem({
+                          ...item,
+                          categoryId: selectedCategory,
+                          subCategory: subCat.id
+                        });
+                      }}
                     />
                   );
                 })}
@@ -814,6 +855,22 @@ export default function AestheticPromptMaster() {
         onCopy={handleCopy}
         copied={copied}
         onClearAll={handleClearAll}
+      />
+
+      {/* 完整提示詞細節檢視彈窗 (Prompt Detail Inspector Modal) */}
+      <PromptDetailModal
+        item={inspectingItem}
+        isOpen={!!inspectingItem}
+        onClose={() => setInspectingItem(null)}
+        isSelected={inspectingItem ? selectedPromptIds.has(inspectingItem.id) : false}
+        onToggleSelect={(id) => togglePrompt(id)}
+        onGoogleSearch={(item) => handleGoogleSearchStyle({ stopPropagation: () => {} } as React.MouseEvent, item)}
+      />
+
+      {/* 新手使用說明指南彈窗 (User Guide Modal) */}
+      <UserGuideModal
+        isOpen={isUserGuideOpen}
+        onClose={() => setIsUserGuideOpen(false)}
       />
     </div>
   );

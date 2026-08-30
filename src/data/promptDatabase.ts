@@ -109,15 +109,11 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
     name: '產品設計與平面商業 Mockup',
     englishName: 'Product, Graphic & Mockup Design',
     icon: 'Package',
-    description: '專為後製合成打造：無文字留白、視角角度、背景陳列、3D黏土、規格海報與蘋果設備',
+    description: '專為後製合成打造：無文字留白、視角角度、背景陳列、海報書本名片',
     subCategories: [
       { id: 'angles', name: '拍攝角度與視角構圖 (Topview / Sideview / 45° / 正面)', englishName: 'Angles & Perspectives', color: 'cyan', desc: '90度俯視平拍、側面平視、正面平視、45度立體角、鳥瞰與微距特寫' },
-      { id: 'staging_background', name: '背景場景與陳列方式 (懸浮 / 百葉窗 / 石膏展台)', englishName: 'Background & Staging', color: 'emerald', desc: '懸浮漂浮、百葉窗幾何光影投影、幾何石膏基座、大理石水波紋、極簡純白孤立' },
-      { id: 'clay_3d_render', name: '3D黏土原型與立體渲染 (Clay Prototype / 拓撲 / AO)', englishName: '3D Clay Prototype & Render Optics', color: 'purple', desc: 'C4D/Clay 黏土純白原型、拓撲結構網格線、消光工業模型、AO純光影環境光遮蔽、爆炸圖' },
-      { id: 'branding_posters', name: '品牌識別與規格海報 (A0-A4 / 旗幟 / 識別證)', englishName: 'Branding, Posters & IDs', color: 'blue', desc: 'A0-A4規格紙張海報、戶外旗幟、掛繩工作證、刺繡布章、品牌型錄' },
-      { id: 'devices_apple', name: '蘋果設備與數位螢幕 (iPad / iPhone / iMac / MacBook)', englishName: 'Apple Devices & Screens', color: 'indigo', desc: 'iPad 平板、iPhone 手機、iMac 電腦螢幕、MacBook 筆電、多螢幕懸浮' },
-      { id: 'books_cards', name: '精裝書籍與頂級名片 (Hardcover & Business Cards)', englishName: 'Hardcover Books & Cards', color: 'rose', desc: '精裝書本封面、開頁畫冊、壓凹燙金名片、雙面懸浮名片組' },
-      { id: 'packaging', name: '產品包裝與瓶器容器 (Packaging & Vessels)', englishName: 'Packaging & Vessels', color: 'amber', desc: '磨砂瓶、包裝盒、易開罐、T-Shirt、牛皮紙袋、軟管' }
+      { id: 'staging_background', name: '背景場景與陳列方式 (懸浮 / 百葉窗 / 階梯展台)', englishName: 'Background & Staging', color: 'emerald', desc: '懸浮漂浮、百葉窗幾何光影投影、純白孤立、幾何階梯、消光黑曜石' },
+      { id: 'print_branding', name: '海報、書本與名片 (Posters, Books & Cards)', englishName: 'Print, Books & Stationery', color: 'rose', desc: 'A1/A4海報、精裝書本/畫冊、凹凸名片、雙面名片' }
     ],
     items: [
       // 1. 拍攝角度與視角構圖 (Angles & Perspectives)
@@ -131,51 +127,17 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
       // 2. 背景場景與陳列方式 (Background & Display Staging)
       { id: 'cm10', subCategory: 'staging_background', label: '懸浮漂浮動態展示 (Levitating / Floating)', prompt: 'levitating floating product composition, dynamic gravity-defying balance, clean isolated environment, sharp studio highlights' },
       { id: 'cm16', subCategory: 'staging_background', label: '百葉窗幾何光影投影 (Gobo Venetian Blind Shadows)', prompt: 'clean aesthetic product placement with subtle window venetian blind shadow projection (gobo), artistic minimal shadow play, crisp diagonal light streaks' },
-      { id: 'cm4', subCategory: 'staging_background', label: '幾何石膏基座與展示台 (Podium)', prompt: 'geometric plaster podium pedestal, clean aesthetic display stand, architectural casting, soft morning ambient light, blank mockup space' },
-      { id: 'cm11', subCategory: 'staging_background', label: '大理石與幾何水波紋展示台 (Marble Ripple Plinth)', prompt: 'luxury polished marble plinth with clean ripple water reflection, crystal clear surface, high-end perfume commercial photography' },
       { id: 'cm1', subCategory: 'staging_background', label: '極簡純白攝影棚背景孤立 (Studio White Isolate)', prompt: 'clean product photography, isolated on pure solid white background, studio softbox illumination, crisp shadow underneath, ready for graphic mockup composite' },
       { id: 'cm_step_platform', subCategory: 'staging_background', label: '幾何階梯階層展示台 (Geometric Step Platform)', prompt: 'minimalist architectural steps and tiered platform stage, brutalist plaster staircase display, clean directional daylight cast' },
       { id: 'cm_dark_luxury', subCategory: 'staging_background', label: '消光黑曜石奢華陳列 (Dark Luxury Slate Staging)', prompt: 'dark matte obsidian slate plinth, moody low-key rim lighting, subtle specular highlights, ultra-luxury aesthetic' },
 
-      // 3. 3D黏土原型與立體渲染 (3D Clay Prototype & Render Optics)
-      { id: 'cm15', subCategory: 'clay_3d_render', label: 'C4D/Clay 黏土純白原型 (Clay Render)', prompt: '3D clay render of product prototype, pure matte white shader, ambient occlusion, smooth topology, Industrial Design rendering' },
-      { id: 'cm_wireframe', subCategory: 'clay_3d_render', label: '灰階拓撲結構網格線 (Wireframe Topology Overlay)', prompt: 'subtle wireframe overlay, 3D polygonal topology mesh lines, technical blueprint aesthetic, precision CAD modeling visual' },
-      { id: 'cm_industrial_dummy', subCategory: 'clay_3d_render', label: '消光樹脂工業設計原型 (Matte Resin Dummy)', prompt: 'matte industrial design concept mock-up, light grey polyurethane tooling board texture, precision CNC machined look, clean studio render' },
-      { id: 'cm_ao_render', subCategory: 'clay_3d_render', label: '純光影環境光遮蔽渲染 (Ambient Occlusion Pass)', prompt: 'pure ambient occlusion (AO) render pass, monochromatic diffused contact shadows, zero texture, pure form and volume definition' },
-      { id: 'cm_exploded_view', subCategory: 'clay_3d_render', label: '懸浮爆炸拆解組件圖 (Exploded Isometric View)', prompt: 'isometric exploded parts view, floating disassembled components, precision engineering hierarchy, industrial product architecture' },
-
-      // 4. 品牌識別與規格海報 (A0-A4, 旗幟, 識別證)
-      { id: 'cm_a0', subCategory: 'branding_posters', label: 'A0 巨幅展覽海報 (A0 Giant Poster Mockup)', prompt: 'blank A0 large format exhibition poster mockup, suspended on architectural gallery concrete wall, high-end museum presentation, crisp shadow cast, no graphics on poster, ready for design composite' },
-      { id: 'cm_a1', subCategory: 'branding_posters', label: 'A1 商業旗艦海報 (A1 Architectural Poster Mockup)', prompt: 'blank A1 vertical graphic poster mockup, sleek minimalist aluminum frame, soft studio ambient reflections, minimal interior wall setting, clean blank canvas' },
-      { id: 'cm_a2', subCategory: 'branding_posters', label: 'A2 設計展覽海報 (A2 Print Poster Mockup)', prompt: 'blank A2 print poster mockup, clean metal clip hanging system, subtle paper weight texture, crisp natural shadow falloff, blank layout' },
-      { id: 'cm_a3', subCategory: 'branding_posters', label: 'A3 藝術型錄/小海報 (A3 Tabloid Print Mockup)', prompt: 'blank A3 tabloid art print mockup, wooden magnetic poster hanger, premium matte archival paper texture, gentle side illumination' },
-      { id: 'cm_a4', subCategory: 'branding_posters', label: 'A4 企業文件與規格型錄 (A4 Letterhead Mockup)', prompt: 'blank A4 corporate stationery letterhead and document mockup, pristine 120gsm fine paper texture, realistic subtle paper curvature, neutral backdrop' },
-      { id: 'cm_flag', subCategory: 'branding_posters', label: '戶外旗幟/垂直布旗 (Vertical Flag Banner Mockup)', prompt: 'blank vertical fabric flag mockup, waving cloth banner, sleek metal flagpole, realistic fabric flutter and cloth wrinkles, minimal outdoor architecture background, blank surface' },
-      { id: 'cm_badge', subCategory: 'branding_posters', label: '掛繩員工識別證/通行證 (Lanyard ID Badge Mockup)', prompt: 'blank hanging corporate ID badge with fabric lanyard neck strap, transparent acrylic card holder, vertical plastic pass mockup, studio softbox lighting, isolated clean backdrop' },
-      { id: 'cm_pin', subCategory: 'branding_posters', label: '金屬刺繡布章/徽章識別 (Embroidered Patch & Pin)', prompt: 'blank metal enamel pin badge and embroidered fabric patch mockup, realistic metallic clasp, tactile woven cloth fiber texture, macro product detail' },
-      { id: 'cm12', subCategory: 'branding_posters', label: '平視極簡商品目錄型錄 (Editorial Lookbook)', prompt: 'minimalist fashion brand lookbook aesthetic, neutral studio set, clean typography layout lines, editorial product presentation, blank editorial space' },
-
-      // 5. 蘋果設備與數位螢幕 (iPad / iPhone / iMac / MacBook)
-      { id: 'cm_ipad', subCategory: 'devices_apple', label: '蘋果 iPad 平板螢幕 (Apple iPad Pro Mockup)', prompt: 'blank Apple iPad Pro tablet mockup, borderless Liquid Retina blank glowing screen, modern space gray aluminum chassis, sleek Apple Pencil stylus beside it, minimalist clay workspace backdrop' },
-      { id: 'cm_iphone', subCategory: 'devices_apple', label: '蘋果 iPhone 旗艦手機螢幕 (Apple iPhone Mockup)', prompt: 'blank Apple iPhone smartphone mockup with edge-to-edge blank display screen, brushed titanium frame, studio rim reflection highlights, isolated on clean minimalist surface' },
-      { id: 'cm_imac', subCategory: 'devices_apple', label: '蘋果 iMac / Studio Display 電腦螢幕 (Apple Monitor Mockup)', prompt: 'blank Apple iMac and Studio Display monitor mockup, sleek aluminum stand, blank 5K Retina display screen placeholder, clean modern designer desk environment, soft ambient light' },
-      { id: 'cm_macbook', subCategory: 'devices_apple', label: '蘋果 MacBook 筆記型電腦螢幕 (Apple MacBook Pro Mockup)', prompt: 'blank Apple MacBook Pro open laptop mockup, floating slightly above clean surface, blank Retina display screen, sleek metallic finish, photorealistic commercial tech presentation' },
-      { id: 'cm9', subCategory: 'devices_apple', label: '3C 數位設備懸浮多螢幕 (Multi-Device UI Mockup)', prompt: 'sleek borderless tablet, laptop, and smartphone floating in synchronized balance, blank glowing screen placeholders, minimal clay render aesthetic' },
-
-      // 6. 精裝書籍與頂級名片 (Hardcover & Business Cards)
-      { id: 'cm_hardcover', subCategory: 'books_cards', label: '精裝書本/封面與書脊 (Hardcover Book & Spine Mockup)', prompt: 'blank luxury hardcover book mockup, showing front cover and debossed spine, cloth linen textured binding, realistic book volume depth and inner paper edge, elegant studio lighting' },
-      { id: 'cm_openbook', subCategory: 'books_cards', label: '開頁精裝畫冊/作品集 (Open Hardcover Lookbook Mockup)', prompt: 'blank open hardcover lookbook artbook mockup, two-page spread layout, smooth organic page curvature, clean negative space for editorial graphic composite' },
-      { id: 'cm_card_emboss', subCategory: 'books_cards', label: '頂級厚磅名片/凹凸壓印 (Luxury Embossed Business Cards)', prompt: 'blank stack of luxury 600gsm heavy cotton business cards, blind debossed indentation and foil stamped metallic edges, tactile textured paper stock, overhead perspective' },
-      { id: 'cm_card_float', subCategory: 'books_cards', label: '雙面懸浮名片組 (Floating Business Cards Pair)', prompt: 'two floating business cards mockup displaying front and back layouts, dynamic directional shadow falloff, minimal clean white studio background' },
-      { id: 'cm6', subCategory: 'books_cards', label: '極簡名片/文具品牌全套識別 (Full Stationery Set)', prompt: 'blank luxury corporate stationery branding mockup, business cards, letterhead, minimal clean layout, embossed paper texture' },
-
-      // 7. 產品包裝與瓶器容器 (Packaging & Vessels)
-      { id: 'cm2', subCategory: 'packaging', label: '極致留白包裝盒 Mockup', prompt: 'blank minimalist packaging box mockup, blank surface with no labels, clean matte paper texture, studio soft shadows, negative space for design placeholder' },
-      { id: 'cm3', subCategory: 'packaging', label: '化妝品磨砂玻璃瓶瓶器', prompt: 'luxury frosted glass cosmetic bottle mockup, blank clean container, subtle subsurface scattering, water droplets, beauty product commercial visual' },
-      { id: 'cm7', subCategory: 'packaging', label: '頂級霧面飲料易開罐/咖啡杯', prompt: 'blank aluminum can and matte coffee cup mockup, no branding, condensation drops, high commercial advertising quality' },
-      { id: 'cm8', subCategory: 'packaging', label: '純白有機棉 T-Shirt 鋪平平拍 (Flat Lay)', prompt: 'blank white heavyweight cotton t-shirt mockup, neat flat lay arrangement, natural fabric folds, neutral studio backdrop' },
-      { id: 'cm13', subCategory: 'packaging', label: '粗礪紙袋與牛皮紙盒工藝包裝', prompt: 'blank kraft paper shopping bag and cardboard packaging box mockup, tactile fiber texture, eco-friendly branding mockup' },
-      { id: 'cm14', subCategory: 'packaging', label: '軟管保養品/乳液乾淨瓶身', prompt: 'blank matte cosmetic squeeze tube mockup, pure minimal background, soft gradient rim lighting, high commercial finish' }
+      // 3. 海報、書本與名片 (共 6 個精選項目)
+      { id: 'cm_a1', subCategory: 'print_branding', label: '極簡框畫海報 (A1 Poster Mockup)', prompt: 'blank vertical graphic poster mockup, sleek minimalist aluminum frame, soft studio ambient reflections, minimal interior wall setting, clean blank canvas' },
+      { id: 'cm_a4', subCategory: 'print_branding', label: 'A4 規格紙張/文件型錄 (A4 Print Mockup)', prompt: 'blank A4 corporate stationery letterhead and document mockup, pristine 120gsm fine paper texture, realistic subtle paper curvature, neutral backdrop' },
+      { id: 'cm_hardcover', subCategory: 'print_branding', label: '精裝書本/封面與書脊 (Hardcover Book Mockup)', prompt: 'blank luxury hardcover book mockup, showing front cover and debossed spine, cloth linen textured binding, realistic book volume depth and inner paper edge, elegant studio lighting' },
+      { id: 'cm_openbook', subCategory: 'print_branding', label: '開頁精裝畫冊/作品集 (Open Lookbook Mockup)', prompt: 'blank open hardcover lookbook artbook mockup, two-page spread layout, smooth organic page curvature, clean negative space for editorial graphic composite' },
+      { id: 'cm_card_emboss', subCategory: 'print_branding', label: '頂級厚磅名片/凹凸壓印 (Luxury Embossed Cards)', prompt: 'blank stack of luxury 600gsm heavy cotton business cards, blind debossed indentation and foil stamped metallic edges, tactile textured paper stock, overhead perspective' },
+      { id: 'cm_card_float', subCategory: 'print_branding', label: '雙面懸浮名片組 (Floating Business Cards)', prompt: 'two floating business cards mockup displaying front and back layouts, dynamic directional shadow falloff, minimal clean white studio background' }
     ]
   },
   photography: {

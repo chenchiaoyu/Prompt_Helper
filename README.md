@@ -1,12 +1,17 @@
-# 提示詞窮救星 PROMPT Helper (MJ • UNIVERSAL AI)
+# 提示詞窮救星-Universal (Prompt Helper)
 
 [![Deploy to GitHub Pages](https://github.com/chenchiaoyu/Prompt_Helper/actions/workflows/deploy.yml/badge.svg)](https://github.com/chenchiaoyu/Prompt_Helper/actions/workflows/deploy.yml)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen?logo=github)](https://chenchiaoyu.github.io/Prompt_Helper/)
 
-專為 Midjourney (V8.2, V7, V6.1, Niji 7) 與通用自然語言 AI 模型（DALL-E 3, SDXL, Flux 等）量身打造的專業級美學提示詞生成與商業視覺調校工作台。
+**提示詞窮救星-Universal**（英文名：**Prompt Helper**）是專為 **Midjourney (V8.2, V7, V6.1, Niji 7)** 與 **通用自然語言 AI 模型（DALL-E 3, SDXL, Flux 等）** 量身打造的美學提示詞生成器與商業視覺調校工作台。
 
 ## 🌐 線上展示 (Live Demo)
 👉 [https://chenchiaoyu.github.io/Prompt_Helper/](https://chenchiaoyu.github.io/Prompt_Helper/)
+
+---
+
+## 🔍 SEO 與關鍵字檢索 (Keywords)
+`提示詞窮救星` `Prompt Helper` `提示詞生成器` `AI Prompt Generator` `Midjourney Prompt` `DALL-E 3 提示詞` `SDXL 提示詞` `Flux Prompt Helper` `商業設計 Mockup` `噪點顆粒控制` `色票調色盤` `AI 算圖工具`
 
 ---
 
@@ -14,10 +19,8 @@
 
 ### 1. 📸 產品設計與平面商業 Mockup 工作流
 - **精準機位視角置頂**：支援 90° Topview 俯視平拍、Sideview 側面平視、正面平視、45° 斜角立體、高角度鳥瞰與微距特寫。
-- **規格化海報與品牌實體**：完整收錄 A0 至 A4 國際標準尺寸紙張海報、企業掛繩識別證、垂墜布旗、精裝書本/作品集畫冊與頂級凹凸壓印名片。
-- **Apple 蘋果數位載體**：iPad Pro 平板、iPhone 鈦金屬手機、MacBook Pro 筆電、iMac / Studio Display 5K 顯示器。
-- **背景陳列與場景光影**：百葉窗幾何光影投影 (Gobo)、懸浮漂浮動態、幾何石膏展台、大理石水波紋、消光黑曜石奢華陳列。
-- **3D 黏土原型與立體渲染**：C4D/Clay 純白黏土模型、灰階拓撲結構網格線 (Wireframe)、消光樹脂概念模型、純光影 AO 環境光遮蔽、爆炸拆解組件圖。
+- **背景陳列與場景光影**：百葉窗幾何光影投影 (Gobo)、懸浮漂浮動態、純白攝影棚孤立、幾何階梯展台、消光黑曜石奢華陳列。
+- **規格海報、書本與名片（精選 6 項）**：極簡框畫海報、A4規格紙張/文件型錄、精裝書本/封面與書脊、開頁精裝作品集畫冊、頂級厚磅凹凸名片、雙面懸浮名片組。
 
 ### 2. 🎛️ 即時參數與質地控制台
 - **噪點與顆粒質感控制器 (Noise & Grain Controller)**：

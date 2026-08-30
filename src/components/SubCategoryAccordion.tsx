@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Check, Info, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Info, Globe, Sparkles } from 'lucide-react';
 import { PromptItem, SubCategory, subCategoryColorMap } from '../data/promptDatabase';
 
 interface SubCategoryAccordionProps {
@@ -10,6 +10,7 @@ interface SubCategoryAccordionProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   onGoogleSearch: (e: React.MouseEvent, item: { label: string; prompt: string }) => void;
+  onInspectPrompt: (e: React.MouseEvent, item: PromptItem) => void;
 }
 
 export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
@@ -20,6 +21,7 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
   isCollapsed,
   onToggleCollapse,
   onGoogleSearch,
+  onInspectPrompt,
 }) => {
   const colorTheme = subCategoryColorMap[subCategory.color] || subCategoryColorMap.slate;
   const selectedCount = items.filter(item => selectedPromptIds.has(item.id)).length;
@@ -113,11 +115,26 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Google 實物參考搜尋 (地球圖示) */}
                       <button
                         type="button"
                         onClick={(e) => onGoogleSearch(e, item)}
-                        title={`在 Google 搜尋「${item.label}」藝術風格範例與解析`}
+                        title={`在 Google 搜尋「${item.label}」實物參考與風格解析`}
+                        className={`w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-white/20 hover:bg-white/35 text-white'
+                            : 'bg-gray-200/60 hover:bg-blue-600 hover:text-white text-gray-500 opacity-80 group-hover:opacity-100'
+                        }`}
+                      >
+                        <Globe className="w-3 h-3 stroke-[2.2]" />
+                      </button>
+
+                      {/* 完整提示詞檢視 (ℹ️ 圖示) */}
+                      <button
+                        type="button"
+                        onClick={(e) => onInspectPrompt(e, item)}
+                        title={`查看「${item.label}」完整英文提示詞`}
                         className={`w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-white/20 hover:bg-white/35 text-white'
@@ -128,7 +145,7 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                       </button>
 
                       {isSelected && (
-                        <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ml-0.5 ${
                           isNegative ? 'bg-red-500 text-white' : 'bg-white text-black'
                         }`}>
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
