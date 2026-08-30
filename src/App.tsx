@@ -25,7 +25,9 @@ import {
   CategoryKey, 
   AIPlatform, 
   promptDatabase, 
-  midjourneyVersions 
+  midjourneyVersions,
+  NoiseLevel,
+  noiseOptions
 } from './data/promptDatabase';
 import { SubCategoryAccordion } from './components/SubCategoryAccordion';
 import { MobileCategoryNav } from './components/MobileCategoryNav';
@@ -49,7 +51,7 @@ export default function AestheticPromptMaster() {
 
   // State: Categories, Search, Selection
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('commercialDesign');
-  const [selectedPromptIds, setSelectedPromptIds] = useState<Set<string>>(new Set(['cm1', 'cm4']));
+  const [selectedPromptIds, setSelectedPromptIds] = useState<Set<string>>(new Set());
   const [subCategoryFilter, setSubCategoryFilter] = useState<string>('all');
   const [collapsedSubCategories, setCollapsedSubCategories] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +65,10 @@ export default function AestheticPromptMaster() {
   const [stylizeValue, setStylizeValue] = useState('150');
   const [chaosValue, setChaosValue] = useState('0');
   const [customNegative, setCustomNegative] = useState('');
-  const [mockupPureMode, setMockupPureMode] = useState(true);
+  const [mockupPureMode, setMockupPureMode] = useState(false);
+
+  // State: Noise & Grain Controller
+  const [noiseLevel, setNoiseLevel] = useState<NoiseLevel>('none');
 
   // State: Composition Reference
   const [enableCompositionRef, setEnableCompositionRef] = useState(false);
@@ -114,6 +119,8 @@ export default function AestheticPromptMaster() {
     setSelectedPromptIds(new Set());
     setSubjectText('');
     setCustomNegative('');
+    setMockupPureMode(false);
+    setNoiseLevel('none');
     setEnableCompositionRef(false);
     setCompositionImageUrl('');
     setEnableColorPalette(false);
@@ -230,13 +237,26 @@ export default function AestheticPromptMaster() {
       pCount++;
     }
 
-    // 6. Custom Negative
+    // 6. Noise & Grain Controller
+    const selectedNoise = noiseOptions.find(n => n.id === noiseLevel);
+    if (selectedNoise && selectedNoise.id !== 'none') {
+      if (selectedNoise.prompt) {
+        positiveTokens.push(selectedNoise.prompt);
+        pCount++;
+      }
+      if (selectedNoise.negativePrompt) {
+        negativeTokens.push(selectedNoise.negativePrompt);
+        nCount++;
+      }
+    }
+
+    // 7. Custom Negative
     if (customNegative.trim()) {
       negativeTokens.push(customNegative.trim());
       nCount++;
     }
 
-    // 7. Composition negative guard
+    // 8. Composition negative guard
     if (enableCompositionRef && compositionImageUrl.trim()) {
       negativeTokens.push('copying style of reference image, original colors of reference image, style transfer');
     }
@@ -309,6 +329,7 @@ export default function AestheticPromptMaster() {
     chaosValue,
     allDatabaseItems,
     mockupPureMode,
+    noiseLevel,
     enableCompositionRef,
     compositionImageUrl,
     compositionStrength,
@@ -562,6 +583,8 @@ export default function AestheticPromptMaster() {
             setCustomHexColors={setCustomHexColors}
             colorGradingIntensity={colorGradingIntensity}
             setColorGradingIntensity={setColorGradingIntensity}
+            noiseLevel={noiseLevel}
+            setNoiseLevel={setNoiseLevel}
           />
 
           {/* ======================================================== */}

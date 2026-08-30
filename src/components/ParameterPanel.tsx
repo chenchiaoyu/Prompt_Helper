@@ -9,12 +9,17 @@ import {
   Palette as PaletteIcon, 
   SlidersHorizontal,
   Plus,
-  Trash2
+  Trash2,
+  Sparkles,
+  Layers,
+  CircleDot
 } from 'lucide-react';
 import { 
   AIPlatform, 
   midjourneyVersions, 
-  presetPalettes 
+  presetPalettes,
+  NoiseLevel,
+  noiseOptions
 } from '../data/promptDatabase';
 
 interface ParameterPanelProps {
@@ -50,6 +55,8 @@ interface ParameterPanelProps {
   setCustomHexColors: React.Dispatch<React.SetStateAction<string[]>>;
   colorGradingIntensity: 'dominant' | 'accent' | 'atmospheric';
   setColorGradingIntensity: (val: 'dominant' | 'accent' | 'atmospheric') => void;
+  noiseLevel: NoiseLevel;
+  setNoiseLevel: (level: NoiseLevel) => void;
 }
 
 export const ParameterPanel: React.FC<ParameterPanelProps> = ({
@@ -83,10 +90,14 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
   setCustomHexColors,
   colorGradingIntensity,
   setColorGradingIntensity,
+  noiseLevel,
+  setNoiseLevel,
 }) => {
   const [showVersionTable, setShowVersionTable] = useState(false);
   const [newColorInput, setNewColorInput] = useState('#D4AF37');
   const [isCollapsedOnMobile, setIsCollapsedOnMobile] = useState(true);
+
+  const currentNoiseObj = noiseOptions.find(n => n.id === noiseLevel) || noiseOptions[0];
 
   const handleAddHexColor = (colorHex: string) => {
     const formatted = colorHex.trim().startsWith('#') ? colorHex.trim() : `#${colorHex.trim()}`;
@@ -370,8 +381,8 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
           </div>
         </div>
 
-        {/* Composition Reference & Color Palette Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Composition Reference, Color Palette & Noise Controller Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* 1. Composition Blueprint Reference Card */}
           <div className="bg-white border border-[#E4E4E7] rounded-xl p-4 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
@@ -380,8 +391,8 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
                   <ImageIcon className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#18181B]">指定參考構圖 (Composition Blueprint)</h3>
-                  <p className="text-[10px] text-gray-400">僅鎖定空間佈局與透視角度，自動防護風格轉移</p>
+                  <h3 className="text-xs font-bold text-[#18181B]">指定參考構圖 (Blueprint)</h3>
+                  <p className="text-[10px] text-gray-400">鎖定空間佈局與透視角度，自動隔離風格</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -437,7 +448,7 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
               </div>
             ) : (
               <div className="py-3 text-center text-xs text-gray-400 border-t border-[#E4E4E7]">
-                開啟後可填入參考圖 URL，將自動鎖定透視與結構，並在負向提示詞加入風格隔離指令。
+                開啟後可填入參考圖 URL，自動鎖定透視與結構並隔離原始風格。
               </div>
             )}
           </div>
@@ -450,8 +461,8 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
                   <PaletteIcon className="w-3.5 h-3.5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#18181B]">指定色票色感 (Hex Color Palette)</h3>
-                  <p className="text-[10px] text-gray-400">精準置入 16 進位 HEX 色碼，掌控生成畫面色調</p>
+                  <h3 className="text-xs font-bold text-[#18181B]">指定色票色感 (Color Palette)</h3>
+                  <p className="text-[10px] text-gray-400">精準置入 16 進位 HEX 色碼，掌控畫面色調</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -469,7 +480,7 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
               <div className="space-y-3 pt-2 border-t border-[#E4E4E7]">
                 {/* Active Custom Hex Colors */}
                 <div>
-                  <label className="text-[11px] text-gray-500 block mb-1.5">目前套用色票組合 ({customHexColors.length}/8)</label>
+                  <label className="text-[11px] text-gray-500 block mb-1.5">目前套用色票 ({customHexColors.length}/8)</label>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {customHexColors.map((hex, idx) => (
                       <div
@@ -513,7 +524,7 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
 
                 {/* Preset Palettes Quick Pick */}
                 <div>
-                  <label className="text-[11px] text-gray-500 block mb-1">經典精選色票快速選用</label>
+                  <label className="text-[11px] text-gray-500 block mb-1">精選色票快速套用</label>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {presetPalettes.map((preset, pIdx) => (
                       <button
@@ -582,6 +593,95 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
                 開啟後可自由自訂色票 HEX 代碼或選用經典配色，精準將色彩融入生成結果。
               </div>
             )}
+          </div>
+
+          {/* 3. Noise & Grain Texture Controller Card */}
+          <div className="bg-white border border-[#E4E4E7] rounded-xl p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-[#18181B]">噪點與顆粒質感 (Noise / Grain)</h3>
+                  <p className="text-[10px] text-gray-400">微調純淨度、底片膠卷顆粒與印刷網點雜訊</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                  noiseLevel === 'none' 
+                    ? 'bg-gray-100 text-gray-500' 
+                    : noiseLevel === 'clean'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-[#18181B] text-white'
+                }`}>
+                  {currentNoiseObj.shortLabel}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-[#E4E4E7]">
+              {/* Noise Presets Selector */}
+              <div>
+                <label className="text-[11px] text-gray-500 block mb-1.5">噪點質感檔位選擇</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {noiseOptions.map((opt) => {
+                    const isSelected = noiseLevel === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setNoiseLevel(opt.id)}
+                        className={`px-2 py-1.5 rounded-lg text-left transition border cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                            : 'bg-[#F4F4F5] hover:bg-gray-200 border-transparent text-gray-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold block truncate">{opt.shortLabel}</span>
+                          {isSelected && <CircleDot className="w-2.5 h-2.5 text-emerald-400 shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Visual Grain Density Indicator */}
+              <div className="bg-[#F4F4F5] rounded-lg p-2.5 border border-[#E4E4E7]/70 space-y-1.5">
+                <div className="flex items-center justify-between text-[10px] text-gray-500 font-mono">
+                  <span>顆粒強度指示 (Density)</span>
+                  <span className="font-bold text-[#18181B]">{currentNoiseObj.intensity}%</span>
+                </div>
+                {/* Visual Progress Bar */}
+                <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-[#18181B] h-full transition-all duration-300"
+                    style={{ width: `${Math.max(currentNoiseObj.intensity, noiseLevel === 'clean' ? 0 : 5)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-600 leading-tight pt-1">
+                  {currentNoiseObj.description}
+                </p>
+              </div>
+
+              {/* Prompt Token Info Box */}
+              {currentNoiseObj.prompt && (
+                <div className="text-[10px] font-mono text-gray-500 bg-white p-2 rounded border border-[#E4E4E7] space-y-0.5">
+                  <div className="font-bold text-gray-700 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                    <span>正向標籤:</span>
+                  </div>
+                  <div className="text-gray-600 line-clamp-1">{currentNoiseObj.prompt}</div>
+                  {currentNoiseObj.negativePrompt && (
+                    <div className="text-red-500 line-clamp-1 pt-0.5 border-t border-gray-100 mt-1">
+                      --no {currentNoiseObj.negativePrompt}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

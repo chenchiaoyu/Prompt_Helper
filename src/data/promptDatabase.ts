@@ -36,6 +36,70 @@ export type CategoryKey =
 
 export type AIPlatform = 'midjourney' | 'universal';
 
+export type NoiseLevel = 'none' | 'clean' | 'subtle' | 'medium' | 'heavy' | 'dither';
+
+export interface NoiseOption {
+  id: NoiseLevel;
+  label: string;
+  shortLabel: string;
+  description: string;
+  prompt: string;
+  negativePrompt?: string;
+  intensity: number; // 0 to 100
+}
+
+export const noiseOptions: NoiseOption[] = [
+  {
+    id: 'none',
+    label: '預設 (無特定標註)',
+    shortLabel: '預設',
+    description: '不強制干預噪點，由模型與風格詞自然決定',
+    prompt: '',
+    intensity: 0
+  },
+  {
+    id: 'clean',
+    label: '純淨無噪點 (Zero Noise / Clean)',
+    shortLabel: '0% 純淨',
+    description: '去除任何雜訊顆粒，呈現極致平滑的現代數位渲染與純淨表面',
+    prompt: 'clean noise-free rendering, smooth surface finish, pristine digital clarity',
+    negativePrompt: 'grain, noise, ISO noise, chromatic aberration, dusty background, artifacts, scratches',
+    intensity: 0
+  },
+  {
+    id: 'subtle',
+    label: '微幅有機顆粒 (Subtle Organic Grain)',
+    shortLabel: '25% 微細',
+    description: '極微弱的細緻有機噪點，增加物理質感與防塑膠感',
+    prompt: 'subtle organic film grain, fine microscopic noise texture, authentic tactile feel',
+    intensity: 25
+  },
+  {
+    id: 'medium',
+    label: '底片膠卷顆粒 (35mm Film Grain / ISO 400)',
+    shortLabel: '50% 膠卷',
+    description: '經典 35mm 柯達膠卷顆粒質感，豐富的模擬底片溫暖雜訊',
+    prompt: 'classic 35mm film grain, analog photographic texture, authentic ISO 400 film noise',
+    intensity: 50
+  },
+  {
+    id: 'heavy',
+    label: '粗礪復古噪點 (Heavy Vintage Grit / ISO 1600)',
+    shortLabel: '80% 粗礪',
+    description: '強烈顆粒感與高感光度粗糙質感，適合暗黑、街頭與復古電影感',
+    prompt: 'heavy analog film grain, rough gritty noise texture, high ISO film aesthetic, tactile roughness',
+    intensity: 80
+  },
+  {
+    id: 'dither',
+    label: '孔版印刷與網點 (Risograph / Halftone Dither)',
+    shortLabel: '網點/Dither',
+    description: '復古印刷孔版網點與點陣散色雜訊，適合藝術海報與插畫',
+    prompt: 'subtle risograph halftone dot noise, organic dithering texture, screen-printed micro dots',
+    intensity: 60
+  }
+];
+
 /**
  * 完整美學提示詞資料庫 (所有超過 10 個標籤的分類均具備結構化子分類)
  */
@@ -45,30 +109,73 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
     name: '產品設計與平面商業 Mockup',
     englishName: 'Product, Graphic & Mockup Design',
     icon: 'Package',
-    description: '專為後製合成打造：無文字留白、乾淨包裝、展示台與商業攝影',
+    description: '專為後製合成打造：無文字留白、視角角度、背景陳列、3D黏土、規格海報與蘋果設備',
     subCategories: [
-      { id: 'plinths', name: '展示台與幾何基座', englishName: 'Plinths & Display Stages', color: 'emerald', desc: '幾何石膏、大理石水波紋、懸浮展示台' },
-      { id: 'branding', name: '品牌識別與海報型錄', englishName: 'Branding, Posters & Editorial', color: 'blue', desc: '純白背景、極簡名片、海報與型錄' },
-      { id: 'packaging', name: '產品包裝與瓶器容器', englishName: 'Packaging & Vessels', color: 'amber', desc: '磨砂瓶、包裝盒、易開罐、T-Shirt、軟管' },
-      { id: 'render_optics', name: '3D原型與百葉窗光影', englishName: '3D Clay & Gobo Shadows', color: 'purple', desc: '黏土模型、UI螢幕框、百葉窗幾何投影' }
+      { id: 'angles', name: '拍攝角度與視角構圖 (Topview / Sideview / 45° / 正面)', englishName: 'Angles & Perspectives', color: 'cyan', desc: '90度俯視平拍、側面平視、正面平視、45度立體角、鳥瞰與微距特寫' },
+      { id: 'staging_background', name: '背景場景與陳列方式 (懸浮 / 百葉窗 / 石膏展台)', englishName: 'Background & Staging', color: 'emerald', desc: '懸浮漂浮、百葉窗幾何光影投影、幾何石膏基座、大理石水波紋、極簡純白孤立' },
+      { id: 'clay_3d_render', name: '3D黏土原型與立體渲染 (Clay Prototype / 拓撲 / AO)', englishName: '3D Clay Prototype & Render Optics', color: 'purple', desc: 'C4D/Clay 黏土純白原型、拓撲結構網格線、消光工業模型、AO純光影環境光遮蔽、爆炸圖' },
+      { id: 'branding_posters', name: '品牌識別與規格海報 (A0-A4 / 旗幟 / 識別證)', englishName: 'Branding, Posters & IDs', color: 'blue', desc: 'A0-A4規格紙張海報、戶外旗幟、掛繩工作證、刺繡布章、品牌型錄' },
+      { id: 'devices_apple', name: '蘋果設備與數位螢幕 (iPad / iPhone / iMac / MacBook)', englishName: 'Apple Devices & Screens', color: 'indigo', desc: 'iPad 平板、iPhone 手機、iMac 電腦螢幕、MacBook 筆電、多螢幕懸浮' },
+      { id: 'books_cards', name: '精裝書籍與頂級名片 (Hardcover & Business Cards)', englishName: 'Hardcover Books & Cards', color: 'rose', desc: '精裝書本封面、開頁畫冊、壓凹燙金名片、雙面懸浮名片組' },
+      { id: 'packaging', name: '產品包裝與瓶器容器 (Packaging & Vessels)', englishName: 'Packaging & Vessels', color: 'amber', desc: '磨砂瓶、包裝盒、易開罐、T-Shirt、牛皮紙袋、軟管' }
     ],
     items: [
-      { id: 'cm1', subCategory: 'branding', label: '極簡白底產品攝影 (Studio Isolate)', prompt: 'clean product photography, isolated on pure solid white background, studio softbox illumination, crisp shadow underneath, ready for graphic mockup composite' },
+      // 1. 拍攝角度與視角構圖 (Angles & Perspectives)
+      { id: 'cm_topview', subCategory: 'angles', label: 'Topview / 90度俯視平拍 (Flat Lay Top-Down)', prompt: 'flat lay top-down view, 90-degree overhead perspective, straight-down bird-eye mockup angle, neat geometric arrangement, isolated clean backdrop' },
+      { id: 'cm_sideview', subCategory: 'angles', label: 'Sideview / 側面平視視角 (Side Profile View)', prompt: 'side profile view, 90-degree lateral perspective, orthogonal elevation view, clean silhouette, studio backdrop' },
+      { id: 'cm_frontview', subCategory: 'angles', label: 'Frontview / 正面平視視角 (Front View)', prompt: 'straight-on front eye-level view, symmetrical frontal perspective, orthogonal elevation, crisp ground shadow' },
+      { id: 'cm_45deg', subCategory: 'angles', label: '45° Angle / 45度斜角立體展示 (45-Degree Angle View)', prompt: 'elevated 45-degree angle perspective, three-quarter angle product view, dynamic diagonal lighting, three-dimensional depth' },
+      { id: 'cm_angle_birdeye', subCategory: 'angles', label: '高角度鳥瞰俯視 (Elevated High-Angle View)', prompt: 'high-angle elevated perspective, dynamic downward angle, balanced composition, soft shadow depth' },
+      { id: 'cm_angle_macro', subCategory: 'angles', label: '極致微距細節特寫 (Macro Close-Up Angle)', prompt: 'extreme macro close-up angle, shallow depth of field, sharp edge definition, fine surface texture focus' },
+
+      // 2. 背景場景與陳列方式 (Background & Display Staging)
+      { id: 'cm10', subCategory: 'staging_background', label: '懸浮漂浮動態展示 (Levitating / Floating)', prompt: 'levitating floating product composition, dynamic gravity-defying balance, clean isolated environment, sharp studio highlights' },
+      { id: 'cm16', subCategory: 'staging_background', label: '百葉窗幾何光影投影 (Gobo Venetian Blind Shadows)', prompt: 'clean aesthetic product placement with subtle window venetian blind shadow projection (gobo), artistic minimal shadow play, crisp diagonal light streaks' },
+      { id: 'cm4', subCategory: 'staging_background', label: '幾何石膏基座與展示台 (Podium)', prompt: 'geometric plaster podium pedestal, clean aesthetic display stand, architectural casting, soft morning ambient light, blank mockup space' },
+      { id: 'cm11', subCategory: 'staging_background', label: '大理石與幾何水波紋展示台 (Marble Ripple Plinth)', prompt: 'luxury polished marble plinth with clean ripple water reflection, crystal clear surface, high-end perfume commercial photography' },
+      { id: 'cm1', subCategory: 'staging_background', label: '極簡純白攝影棚背景孤立 (Studio White Isolate)', prompt: 'clean product photography, isolated on pure solid white background, studio softbox illumination, crisp shadow underneath, ready for graphic mockup composite' },
+      { id: 'cm_step_platform', subCategory: 'staging_background', label: '幾何階梯階層展示台 (Geometric Step Platform)', prompt: 'minimalist architectural steps and tiered platform stage, brutalist plaster staircase display, clean directional daylight cast' },
+      { id: 'cm_dark_luxury', subCategory: 'staging_background', label: '消光黑曜石奢華陳列 (Dark Luxury Slate Staging)', prompt: 'dark matte obsidian slate plinth, moody low-key rim lighting, subtle specular highlights, ultra-luxury aesthetic' },
+
+      // 3. 3D黏土原型與立體渲染 (3D Clay Prototype & Render Optics)
+      { id: 'cm15', subCategory: 'clay_3d_render', label: 'C4D/Clay 黏土純白原型 (Clay Render)', prompt: '3D clay render of product prototype, pure matte white shader, ambient occlusion, smooth topology, Industrial Design rendering' },
+      { id: 'cm_wireframe', subCategory: 'clay_3d_render', label: '灰階拓撲結構網格線 (Wireframe Topology Overlay)', prompt: 'subtle wireframe overlay, 3D polygonal topology mesh lines, technical blueprint aesthetic, precision CAD modeling visual' },
+      { id: 'cm_industrial_dummy', subCategory: 'clay_3d_render', label: '消光樹脂工業設計原型 (Matte Resin Dummy)', prompt: 'matte industrial design concept mock-up, light grey polyurethane tooling board texture, precision CNC machined look, clean studio render' },
+      { id: 'cm_ao_render', subCategory: 'clay_3d_render', label: '純光影環境光遮蔽渲染 (Ambient Occlusion Pass)', prompt: 'pure ambient occlusion (AO) render pass, monochromatic diffused contact shadows, zero texture, pure form and volume definition' },
+      { id: 'cm_exploded_view', subCategory: 'clay_3d_render', label: '懸浮爆炸拆解組件圖 (Exploded Isometric View)', prompt: 'isometric exploded parts view, floating disassembled components, precision engineering hierarchy, industrial product architecture' },
+
+      // 4. 品牌識別與規格海報 (A0-A4, 旗幟, 識別證)
+      { id: 'cm_a0', subCategory: 'branding_posters', label: 'A0 巨幅展覽海報 (A0 Giant Poster Mockup)', prompt: 'blank A0 large format exhibition poster mockup, suspended on architectural gallery concrete wall, high-end museum presentation, crisp shadow cast, no graphics on poster, ready for design composite' },
+      { id: 'cm_a1', subCategory: 'branding_posters', label: 'A1 商業旗艦海報 (A1 Architectural Poster Mockup)', prompt: 'blank A1 vertical graphic poster mockup, sleek minimalist aluminum frame, soft studio ambient reflections, minimal interior wall setting, clean blank canvas' },
+      { id: 'cm_a2', subCategory: 'branding_posters', label: 'A2 設計展覽海報 (A2 Print Poster Mockup)', prompt: 'blank A2 print poster mockup, clean metal clip hanging system, subtle paper weight texture, crisp natural shadow falloff, blank layout' },
+      { id: 'cm_a3', subCategory: 'branding_posters', label: 'A3 藝術型錄/小海報 (A3 Tabloid Print Mockup)', prompt: 'blank A3 tabloid art print mockup, wooden magnetic poster hanger, premium matte archival paper texture, gentle side illumination' },
+      { id: 'cm_a4', subCategory: 'branding_posters', label: 'A4 企業文件與規格型錄 (A4 Letterhead Mockup)', prompt: 'blank A4 corporate stationery letterhead and document mockup, pristine 120gsm fine paper texture, realistic subtle paper curvature, neutral backdrop' },
+      { id: 'cm_flag', subCategory: 'branding_posters', label: '戶外旗幟/垂直布旗 (Vertical Flag Banner Mockup)', prompt: 'blank vertical fabric flag mockup, waving cloth banner, sleek metal flagpole, realistic fabric flutter and cloth wrinkles, minimal outdoor architecture background, blank surface' },
+      { id: 'cm_badge', subCategory: 'branding_posters', label: '掛繩員工識別證/通行證 (Lanyard ID Badge Mockup)', prompt: 'blank hanging corporate ID badge with fabric lanyard neck strap, transparent acrylic card holder, vertical plastic pass mockup, studio softbox lighting, isolated clean backdrop' },
+      { id: 'cm_pin', subCategory: 'branding_posters', label: '金屬刺繡布章/徽章識別 (Embroidered Patch & Pin)', prompt: 'blank metal enamel pin badge and embroidered fabric patch mockup, realistic metallic clasp, tactile woven cloth fiber texture, macro product detail' },
+      { id: 'cm12', subCategory: 'branding_posters', label: '平視極簡商品目錄型錄 (Editorial Lookbook)', prompt: 'minimalist fashion brand lookbook aesthetic, neutral studio set, clean typography layout lines, editorial product presentation, blank editorial space' },
+
+      // 5. 蘋果設備與數位螢幕 (iPad / iPhone / iMac / MacBook)
+      { id: 'cm_ipad', subCategory: 'devices_apple', label: '蘋果 iPad 平板螢幕 (Apple iPad Pro Mockup)', prompt: 'blank Apple iPad Pro tablet mockup, borderless Liquid Retina blank glowing screen, modern space gray aluminum chassis, sleek Apple Pencil stylus beside it, minimalist clay workspace backdrop' },
+      { id: 'cm_iphone', subCategory: 'devices_apple', label: '蘋果 iPhone 旗艦手機螢幕 (Apple iPhone Mockup)', prompt: 'blank Apple iPhone smartphone mockup with edge-to-edge blank display screen, brushed titanium frame, studio rim reflection highlights, isolated on clean minimalist surface' },
+      { id: 'cm_imac', subCategory: 'devices_apple', label: '蘋果 iMac / Studio Display 電腦螢幕 (Apple Monitor Mockup)', prompt: 'blank Apple iMac and Studio Display monitor mockup, sleek aluminum stand, blank 5K Retina display screen placeholder, clean modern designer desk environment, soft ambient light' },
+      { id: 'cm_macbook', subCategory: 'devices_apple', label: '蘋果 MacBook 筆記型電腦螢幕 (Apple MacBook Pro Mockup)', prompt: 'blank Apple MacBook Pro open laptop mockup, floating slightly above clean surface, blank Retina display screen, sleek metallic finish, photorealistic commercial tech presentation' },
+      { id: 'cm9', subCategory: 'devices_apple', label: '3C 數位設備懸浮多螢幕 (Multi-Device UI Mockup)', prompt: 'sleek borderless tablet, laptop, and smartphone floating in synchronized balance, blank glowing screen placeholders, minimal clay render aesthetic' },
+
+      // 6. 精裝書籍與頂級名片 (Hardcover & Business Cards)
+      { id: 'cm_hardcover', subCategory: 'books_cards', label: '精裝書本/封面與書脊 (Hardcover Book & Spine Mockup)', prompt: 'blank luxury hardcover book mockup, showing front cover and debossed spine, cloth linen textured binding, realistic book volume depth and inner paper edge, elegant studio lighting' },
+      { id: 'cm_openbook', subCategory: 'books_cards', label: '開頁精裝畫冊/作品集 (Open Hardcover Lookbook Mockup)', prompt: 'blank open hardcover lookbook artbook mockup, two-page spread layout, smooth organic page curvature, clean negative space for editorial graphic composite' },
+      { id: 'cm_card_emboss', subCategory: 'books_cards', label: '頂級厚磅名片/凹凸壓印 (Luxury Embossed Business Cards)', prompt: 'blank stack of luxury 600gsm heavy cotton business cards, blind debossed indentation and foil stamped metallic edges, tactile textured paper stock, overhead perspective' },
+      { id: 'cm_card_float', subCategory: 'books_cards', label: '雙面懸浮名片組 (Floating Business Cards Pair)', prompt: 'two floating business cards mockup displaying front and back layouts, dynamic directional shadow falloff, minimal clean white studio background' },
+      { id: 'cm6', subCategory: 'books_cards', label: '極簡名片/文具品牌全套識別 (Full Stationery Set)', prompt: 'blank luxury corporate stationery branding mockup, business cards, letterhead, minimal clean layout, embossed paper texture' },
+
+      // 7. 產品包裝與瓶器容器 (Packaging & Vessels)
       { id: 'cm2', subCategory: 'packaging', label: '極致留白包裝盒 Mockup', prompt: 'blank minimalist packaging box mockup, blank surface with no labels, clean matte paper texture, studio soft shadows, negative space for design placeholder' },
       { id: 'cm3', subCategory: 'packaging', label: '化妝品磨砂玻璃瓶瓶器', prompt: 'luxury frosted glass cosmetic bottle mockup, blank clean container, subtle subsurface scattering, water droplets, beauty product commercial visual' },
-      { id: 'cm4', subCategory: 'plinths', label: '幾何石膏基座與展示台 (Podium)', prompt: 'geometric plaster podium pedestal, clean aesthetic display stand, architectural casting, soft morning ambient light, blank mockup space' },
-      { id: 'cm5', subCategory: 'branding', label: '平面海報展示場景 (Poster Mockup)', prompt: 'blank A4 vertical poster mockup hanging on minimal concrete wall, realistic paper cast shadow, clean interior scene, no graphics on poster' },
-      { id: 'cm6', subCategory: 'branding', label: '極簡名片/文具品牌識別 (Branding)', prompt: 'blank luxury corporate stationery branding mockup, business cards, letterhead, minimal clean layout, embossed paper texture' },
       { id: 'cm7', subCategory: 'packaging', label: '頂級霧面飲料易開罐/咖啡杯', prompt: 'blank aluminum can and matte coffee cup mockup, no branding, condensation drops, high commercial advertising quality' },
       { id: 'cm8', subCategory: 'packaging', label: '純白有機棉 T-Shirt 鋪平平拍 (Flat Lay)', prompt: 'blank white heavyweight cotton t-shirt mockup, neat flat lay arrangement, natural fabric folds, neutral studio backdrop' },
-      { id: 'cm9', subCategory: 'render_optics', label: '3C 設備螢幕框 (UI Device Mockup)', prompt: 'sleek borderless tablet and smartphone floating in clean space, blank glowing screen mockup, minimal clay render aesthetic' },
-      { id: 'cm10', subCategory: 'plinths', label: '懸浮漂浮動態產品攝影 (Levitating)', prompt: 'levitating floating product composition, dynamic gravity-defying balance, clean isolated environment, sharp studio highlights' },
-      { id: 'cm11', subCategory: 'plinths', label: '大理石與幾何水波紋展示台', prompt: 'luxury polished marble plinth with clean ripple water reflection, crystal clear surface, high-end perfume commercial photography' },
-      { id: 'cm12', subCategory: 'branding', label: '平視極簡商品目錄型錄 (Lookbook)', prompt: 'minimalist fashion brand lookbook aesthetic, neutral studio set, clean lines, editorial product presentation' },
       { id: 'cm13', subCategory: 'packaging', label: '粗礪紙袋與牛皮紙盒工藝包裝', prompt: 'blank kraft paper shopping bag and cardboard packaging box mockup, tactile fiber texture, eco-friendly branding mockup' },
-      { id: 'cm14', subCategory: 'packaging', label: '軟管保養品/乳液乾淨瓶身', prompt: 'blank matte cosmetic squeeze tube mockup, pure minimal background, soft gradient rim lighting, high commercial finish' },
-      { id: 'cm15', subCategory: 'render_optics', label: 'C4D/Clay 黏土純白原型 (Clay Render)', prompt: '3D clay render of product prototype, pure matte white shader, ambient occlusion, smooth topology, Industrial Design rendering' },
-      { id: 'cm16', subCategory: 'render_optics', label: '幾何光影百葉窗剪影投影 (Gobo)', prompt: 'clean aesthetic product placement with subtle window venetian blind shadow projection (gobo), artistic minimal branding' }
+      { id: 'cm14', subCategory: 'packaging', label: '軟管保養品/乳液乾淨瓶身', prompt: 'blank matte cosmetic squeeze tube mockup, pure minimal background, soft gradient rim lighting, high commercial finish' }
     ]
   },
   photography: {
@@ -127,10 +234,14 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
     icon: 'Compass',
     description: '視覺導引、幾何張力與空間比例',
     subCategories: [
-      { id: 'perspective', name: '機位視角與空間透視', englishName: 'Camera Angles & Perspective', color: 'cyan', desc: '鳥瞰、仰視、荷蘭角、等距軸測與極致特寫' },
+      { id: 'perspective', name: '機位視角與空間透視', englishName: 'Camera Angles & Perspective', color: 'cyan', desc: '俯視Topview、側視Sideview、正視、鳥瞰、仰視、等距軸測與特寫' },
       { id: 'geometry', name: '幾何構圖與比例導引', englishName: 'Geometry & Visual Flow', color: 'indigo', desc: '三分法、絕對對稱、黃金螺旋、引導線、負空間留白' }
     ],
     items: [
+      { id: 'c_topview', subCategory: 'perspective', label: 'Topview / 90度垂直俯視平拍 (Flat Lay Top View)', prompt: 'flat lay top-down view, 90-degree overhead perspective, straight-down bird-eye mockup angle, neat arrangement' },
+      { id: 'c_sideview', subCategory: 'perspective', label: 'Sideview / 側面平視視角 (Side Profile View)', prompt: 'side profile view, 90-degree lateral perspective, orthogonal elevation view, clean silhouette' },
+      { id: 'c_frontview', subCategory: 'perspective', label: 'Frontview / 正面平視視角 (Straight-On Front View)', prompt: 'straight-on front eye-level view, direct symmetrical frontal perspective, orthogonal elevation' },
+      { id: 'c_45deg', subCategory: 'perspective', label: '45° Angle / 45度斜角立體透視 (Three-Quarter Angle)', prompt: 'elevated 45-degree angle perspective, three-quarter angle product view, dynamic diagonal depth' },
       { id: 'c1', subCategory: 'geometry', label: '經典三分法', prompt: 'rule of thirds composition, balanced focal point' },
       { id: 'c2', subCategory: 'geometry', label: '絕對對稱美學', prompt: 'perfect symmetrical composition, geometric equilibrium' },
       { id: 'c3', subCategory: 'perspective', label: '鳥瞰空拍視角', prompt: 'aerial bird-eye view, drone photography, top-down perspective' },
