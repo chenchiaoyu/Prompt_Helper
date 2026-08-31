@@ -6,6 +6,14 @@ export interface SubCategory {
   desc?: string;
 }
 
+export interface ArtTimelineInfo {
+  era: string; // e.g. '15-16 世紀'
+  period: string; // e.g. '文藝復興'
+  yearRange: string; // e.g. 'c. 1400 - 1600'
+  order: number; // 排序用 1 ~ 8
+  historicalContext: string; // 簡短歷史背景
+}
+
 export interface PromptItem {
   id: string;
   subCategory?: string;
@@ -13,6 +21,7 @@ export interface PromptItem {
   prompt: string;
   categoryId?: CategoryKey;
   isNegative?: boolean;
+  timeline?: ArtTimelineInfo;
 }
 
 export interface CategoryData {
@@ -78,78 +87,165 @@ export const noiseOptions: NoiseOption[] = [
     id: 'medium',
     label: '底片膠卷顆粒 (35mm Film Grain / ISO 400)',
     shortLabel: '50% 膠卷',
-    description: '經典 35mm 柯達膠卷顆粒質感，豐富的模擬底片溫暖雜訊',
-    prompt: 'classic 35mm film grain, analog photographic texture, authentic ISO 400 film noise',
+    description: '經典柯達 Portra 膠片顆粒，帶來溫潤復古的類比電影質感',
+    prompt: 'authentic 35mm film grain, analog film photography texture, Kodak Portra aesthetic',
     intensity: 50
   },
   {
     id: 'heavy',
-    label: '粗礪復古噪點 (Heavy Vintage Grit / ISO 1600)',
-    shortLabel: '80% 粗礪',
-    description: '強烈顆粒感與高感光度粗糙質感，適合暗黑、街頭與復古電影感',
-    prompt: 'heavy analog film grain, rough gritty noise texture, high ISO film aesthetic, tactile roughness',
-    intensity: 80
+    label: '粗顆粒街頭風 (High ISO / Rough Grain)',
+    shortLabel: '75% 粗顆粒',
+    description: '高感光度黑白銀鹽粗糙顆粒，森山大道風格的生猛街頭張力',
+    prompt: 'heavy rough film grain, gritty tactile texture, high ISO noise aesthetic, raw unpolished',
+    intensity: 75
   },
   {
     id: 'dither',
-    label: '孔版印刷與網點 (Risograph / Halftone Dither)',
-    shortLabel: '網點/Dither',
-    description: '復古印刷孔版網點與點陣散色雜訊，適合藝術海報與插畫',
-    prompt: 'subtle risograph halftone dot noise, organic dithering texture, screen-printed micro dots',
-    intensity: 60
+    label: '復古印刷網點/抖動 (Halftone & Dither)',
+    shortLabel: '網點抖動',
+    description: '孔版印刷與報紙半色調網點，呈現復古印刷錯位與點陣藝術感',
+    prompt: 'halftone screen dot pattern, retro risograph texture, dithered print aesthetic',
+    intensity: 90
   }
 ];
 
-/**
- * 完整美學提示詞資料庫 (所有超過 10 個標籤的分類均具備結構化子分類)
- */
+// 美術史歷史時期時間軸定義 (Art History Timeline Periods)
+export interface TimelinePeriod {
+  id: string;
+  name: string;
+  englishName: string;
+  era: string;
+  yearRange: string;
+  description: string;
+  color: string;
+}
+
+export const artTimelinePeriods: TimelinePeriod[] = [
+  {
+    id: 'all',
+    name: '全部時期',
+    englishName: 'All Eras',
+    era: '全時期',
+    yearRange: '500 - 至今',
+    description: '瀏覽自中世紀、文藝復興跨越至當代藝術大師作品',
+    color: 'slate'
+  },
+  {
+    id: 'medieval',
+    name: '中世紀與早期信仰',
+    englishName: 'Medieval & Sacred',
+    era: '5 - 15 世紀',
+    yearRange: 'c. 500 - 1400',
+    description: '拜占庭金箔馬賽克、哥德式教堂彩繪玻璃，強調神聖莊嚴與平面金屬鑲嵌',
+    color: 'amber'
+  },
+  {
+    id: 'renaissance',
+    name: '文藝復興全盛期',
+    englishName: 'High Renaissance',
+    era: '15 - 16 世紀',
+    yearRange: 'c. 1400 - 1600',
+    description: '達文西漸隱暈塗、波提切利柔美線條、米開朗基羅解剖學力量，人文主義與黃金比例覺醒',
+    color: 'rose'
+  },
+  {
+    id: 'baroque_dutch',
+    name: '巴洛克與荷蘭黃金時代',
+    englishName: 'Baroque & Dutch Age',
+    era: '17 世紀',
+    yearRange: 'c. 1600 - 1700',
+    description: '卡拉瓦喬強烈明暗對照、林布蘭深邃情感、維梅爾窗邊柔光，戲劇性與市井光影的高峰',
+    color: 'indigo'
+  },
+  {
+    id: 'rococo_romantic',
+    name: '洛可可、浪漫主義與浮世繪',
+    englishName: 'Rococo & Romanticism',
+    era: '18 - 19 世紀初',
+    yearRange: 'c. 1730 - 1860',
+    description: '宮廷優雅粉彩、大自然崇高孤寂感（佛烈德利赫）與日本江戶葛飾北齋浮世繪版畫',
+    color: 'teal'
+  },
+  {
+    id: 'impressionism',
+    name: '印象派與後印象派',
+    englishName: 'Impressionism Era',
+    era: '19 世紀中晚期',
+    yearRange: 'c. 1860 - 1900',
+    description: '莫內戶外光斑碎筆、秀拉光學點彩、梵谷狂放情感筆觸、塞尚幾何結構，現代藝術序幕',
+    color: 'cyan'
+  },
+  {
+    id: 'art_nouveau',
+    name: '新藝術、象徵與表現主義',
+    englishName: 'Art Nouveau & Expressionism',
+    era: '19 世紀末 - 20 世紀初',
+    yearRange: 'c. 1890 - 1920',
+    description: '慕夏流暢藤蔓曲線、克林姆璀璨金箔圖騰、孟克內心焦慮吶喊，裝飾與心靈表現並進',
+    color: 'violet'
+  },
+  {
+    id: 'avant_garde',
+    name: '現代先鋒與立體超寫實',
+    englishName: 'Modern Avant-Garde',
+    era: '20 世紀上半葉',
+    yearRange: 'c. 1905 - 1950',
+    description: '畢卡索立體派碎片、達利融化超現實夢境、馬諦斯野獸派、康丁斯基抽象音樂旋律',
+    color: 'fuchsia'
+  },
+  {
+    id: 'contemporary',
+    name: '戰後當代與普普大眾',
+    englishName: 'Post-War & Contemporary',
+    era: '20 世紀中葉至今',
+    yearRange: 'c. 1950 - 現代',
+    description: '安迪沃荷普普印刷、波洛克行動潑墨、草間彌生波點、街頭塗鴉與當代觀念藝術',
+    color: 'orange'
+  }
+];
+
 export const promptDatabase: Record<CategoryKey, CategoryData> = {
+  // ==========================================
+  // 1. 產品設計與平面商業 Mockup (Commercial Design)
+  // ==========================================
   commercialDesign: {
     id: 'commercialDesign',
-    name: '產品設計與平面商業 Mockup',
-    englishName: 'Product, Graphic & Mockup Design',
+    name: '產品設計與商業 Mockup',
+    englishName: 'Commercial & Product Mockup',
     icon: 'Package',
-    description: '專為後製合成打造：無文字留白、視角角度、背景陳列、海報書本名片',
+    description: '適用於包裝、UI/UX、海報、書籍與品牌識別展示',
     subCategories: [
-      { id: 'angles', name: '拍攝角度與視角構圖 (Topview / Sideview / 45° / 正面)', englishName: 'Angles & Perspectives', color: 'cyan', desc: '90度俯視平拍、側面平視、正面平視、45度立體角、鳥瞰與微距特寫' },
-      { id: 'staging_background', name: '背景場景與陳列方式 (懸浮 / 百葉窗 / 階梯展台)', englishName: 'Background & Staging', color: 'emerald', desc: '懸浮漂浮、百葉窗幾何光影投影、純白孤立、幾何階梯、消光黑曜石' },
-      { id: 'print_branding', name: '海報、書本與名片 (Posters, Books & Cards)', englishName: 'Print, Books & Stationery', color: 'rose', desc: 'A1/A4海報、精裝書本/畫冊、凹凸名片、雙面名片' }
+      { id: 'podium', name: '極簡展台與陳列幾何', englishName: 'Podium & Stages', color: 'indigo', desc: '純白去背、幾何階梯、奢華黑曜石展台與懸浮場景' },
+      { id: 'print_paper', name: '平面印刷與紙質載體', englishName: 'Print & Paper Mockups', color: 'amber', desc: 'A1海報框、A4文件、精裝書本、棉卡名片與壓印工藝' }
     ],
     items: [
-      // 1. 拍攝角度與視角構圖 (Angles & Perspectives)
-      { id: 'cm_topview', subCategory: 'angles', label: 'Topview / 90度俯視平拍 (Flat Lay Top-Down)', prompt: 'flat lay top-down view, 90-degree overhead perspective, straight-down bird-eye mockup angle, neat geometric arrangement, isolated clean backdrop' },
-      { id: 'cm_sideview', subCategory: 'angles', label: 'Sideview / 側面平視視角 (Side Profile View)', prompt: 'side profile view, 90-degree lateral perspective, orthogonal elevation view, clean silhouette, studio backdrop' },
-      { id: 'cm_frontview', subCategory: 'angles', label: 'Frontview / 正面平視視角 (Front View)', prompt: 'straight-on front eye-level view, symmetrical frontal perspective, orthogonal elevation, crisp ground shadow' },
-      { id: 'cm_45deg', subCategory: 'angles', label: '45° Angle / 45度斜角立體展示 (45-Degree Angle View)', prompt: 'elevated 45-degree angle perspective, three-quarter angle product view, dynamic diagonal lighting, three-dimensional depth' },
-      { id: 'cm_angle_birdeye', subCategory: 'angles', label: '高角度鳥瞰俯視 (Elevated High-Angle View)', prompt: 'high-angle elevated perspective, dynamic downward angle, balanced composition, soft shadow depth' },
-      { id: 'cm_angle_macro', subCategory: 'angles', label: '極致微距細節特寫 (Macro Close-Up Angle)', prompt: 'extreme macro close-up angle, shallow depth of field, sharp edge definition, fine surface texture focus' },
-
-      // 2. 背景場景與陳列方式 (Background & Display Staging)
-      { id: 'cm10', subCategory: 'staging_background', label: '懸浮漂浮動態展示 (Levitating / Floating)', prompt: 'levitating floating product composition, dynamic gravity-defying balance, clean isolated environment, sharp studio highlights' },
-      { id: 'cm16', subCategory: 'staging_background', label: '百葉窗幾何光影投影 (Gobo Venetian Blind Shadows)', prompt: 'clean aesthetic product placement with subtle window venetian blind shadow projection (gobo), artistic minimal shadow play, crisp diagonal light streaks' },
-      { id: 'cm1', subCategory: 'staging_background', label: '極簡純白攝影棚背景孤立 (Studio White Isolate)', prompt: 'clean product photography, isolated on pure solid white background, studio softbox illumination, crisp shadow underneath, ready for graphic mockup composite' },
-      { id: 'cm_step_platform', subCategory: 'staging_background', label: '幾何階梯階層展示台 (Geometric Step Platform)', prompt: 'minimalist architectural steps and tiered platform stage, brutalist plaster staircase display, clean directional daylight cast' },
-      { id: 'cm_dark_luxury', subCategory: 'staging_background', label: '消光黑曜石奢華陳列 (Dark Luxury Slate Staging)', prompt: 'dark matte obsidian slate plinth, moody low-key rim lighting, subtle specular highlights, ultra-luxury aesthetic' },
-
-      // 3. 海報、書本與名片 (共 6 個精選項目)
-      { id: 'cm_a1', subCategory: 'print_branding', label: '極簡框畫海報 (A1 Poster Mockup)', prompt: 'blank vertical graphic poster mockup, sleek minimalist aluminum frame, soft studio ambient reflections, minimal interior wall setting, clean blank canvas' },
-      { id: 'cm_a4', subCategory: 'print_branding', label: 'A4 規格紙張/文件型錄 (A4 Print Mockup)', prompt: 'blank A4 corporate stationery letterhead and document mockup, pristine 120gsm fine paper texture, realistic subtle paper curvature, neutral backdrop' },
-      { id: 'cm_hardcover', subCategory: 'print_branding', label: '精裝書本/封面與書脊 (Hardcover Book Mockup)', prompt: 'blank luxury hardcover book mockup, showing front cover and debossed spine, cloth linen textured binding, realistic book volume depth and inner paper edge, elegant studio lighting' },
-      { id: 'cm_openbook', subCategory: 'print_branding', label: '開頁精裝畫冊/作品集 (Open Lookbook Mockup)', prompt: 'blank open hardcover lookbook artbook mockup, two-page spread layout, smooth organic page curvature, clean negative space for editorial graphic composite' },
-      { id: 'cm_card_emboss', subCategory: 'print_branding', label: '頂級厚磅名片/凹凸壓印 (Luxury Embossed Cards)', prompt: 'blank stack of luxury 600gsm heavy cotton business cards, blind debossed indentation and foil stamped metallic edges, tactile textured paper stock, overhead perspective' },
-      { id: 'cm_card_float', subCategory: 'print_branding', label: '雙面懸浮名片組 (Floating Business Cards)', prompt: 'two floating business cards mockup displaying front and back layouts, dynamic directional shadow falloff, minimal clean white studio background' }
+      { id: 'cm10', subCategory: 'podium', label: '動態懸浮零重力展示 (Levitating)', prompt: 'floating in mid-air, zero gravity suspension, dynamic clean balance, isolated aesthetic, soft contact shadow underneath, commercial studio rendering' },
+      { id: 'cm16', subCategory: 'podium', label: '百葉窗條紋光影空間 (Shadowplay)', prompt: 'venetian blinds shadow patterns, geometric diagonal sunlight stripes, minimalist architectural interior, natural warm ambient lighting, elegant studio backdrop' },
+      { id: 'cm1', subCategory: 'podium', label: '純白極簡電商去背攝影棚 (Pure Studio)', prompt: 'clean pure white seamless background, soft studio ambient fill light, subtle realistic drop shadow underneath, commercial e-commerce product mockup' },
+      { id: 'cm_step_platform', subCategory: 'podium', label: '幾何階梯展台 (Stepped Pedestal)', prompt: 'minimalist stepped geometric podium, architectural concrete block elevation, hard directional sunlight, elegant sculptural stage' },
+      { id: 'cm_dark_luxury', subCategory: 'podium', label: '低調奢華黑曜石展台 (Obsidian Dark)', prompt: 'matte black obsidian stone pedestal, subtle rim lighting, dramatic moody backdrop, dark luxury aesthetic, premium gold accents' },
+      { id: 'cm_a1', subCategory: 'print_paper', label: 'A1 鋁框海報展示 (A1 Frame Mockup)', prompt: 'vertical A1 slim aluminum picture frame mockup, hanging on gallery concrete wall, natural soft window light reflection, clean glass glare' },
+      { id: 'cm_a4', subCategory: 'print_paper', label: 'A4 辦公紙張排版 (A4 Letterhead)', prompt: 'A4 stationery paper sheet mockup, 120gsm premium textured paper, slight natural bend, clean flat lay desktop arrangement, soft diffuse lighting' },
+      { id: 'cm_hardcover', subCategory: 'print_paper', label: '精裝書籍布紋封面 (Hardcover Book)', prompt: 'thick hardcover book mockup, premium woven cloth texture cover, embossed foil spine lettering, three-dimensional book angle on wooden desk' },
+      { id: 'cm_openbook', subCategory: 'print_paper', label: '開展畫冊雙頁展示 (Open Magazine)', prompt: 'open editorial art magazine mockup, spread pages with natural paper curve, minimalist typography layout, soft overhead studio lighting' },
+      { id: 'cm_card_emboss', subCategory: 'print_paper', label: '重磅棉卡盲壓印名片 (Embossed Card)', prompt: '600gsm heavy cotton business card mockup, deep blind letterpress debossing, crisp tactile edges, luxurious micro texture' },
+      { id: 'cm_card_float', subCategory: 'print_paper', label: '雙面名片立體懸浮 (Floating Cards)', prompt: 'two floating business cards displaying front and back layout, clean diagonal alignment, soft realistic multi-layer drop shadows' }
     ]
   },
+
+  // ==========================================
+  // 2. 攝影器材與鏡頭語言 (Photography & Optics)
+  // ==========================================
   photography: {
     id: 'photography',
     name: '攝影器材與鏡頭語言',
-    englishName: 'Photography, Lenses & Masters',
+    englishName: 'Photography & Optics',
     icon: 'Camera',
-    description: '當代攝影大師風格、電影級鏡頭語言、景深與光影調校',
+    description: '當代攝影大師、專業光學焦段、光線氛圍與實體底片質感',
     subCategories: [
       { id: 'masters', name: '當代攝影大師風格', englishName: 'Contemporary Masters', color: 'indigo', desc: 'Annie Leibovitz、Peter Lindbergh、森山大道等大師語彙' },
-      { id: 'lenses', name: '鏡頭焦段與光學', englishName: 'Lenses & Optics', color: 'amber', desc: '85mm 淺景深、24mm 廣角、變形寬銀幕、移軸與黑柔' },
-      { id: 'lighting', name: '光影調校與氛圍', englishName: 'Lighting & Atmospheres', color: 'emerald', desc: '柔光箱、丁達爾耶穌光、黃金時刻暖陽、賽博霓虹' }
+      { id: 'lenses', name: '鏡頭焦段與特殊光學', englishName: 'Lenses & Special Optics', color: 'amber', desc: '85mm 淺景深、24mm 廣角、變形寬銀幕、移軸、針孔與顯微鏡' },
+      { id: 'lighting', name: '光影調校與自然/特殊光源', englishName: 'Lighting & Atmospheres', color: 'emerald', desc: '柔光箱、丁達爾光、黃金時刻暖陽、燭光、賽博霓虹、黑光紫外線' }
     ],
     items: [
       // 1. 當代攝影大師風格 (Masters)
@@ -162,7 +258,7 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
       { id: 'p_photog7', subCategory: 'masters', label: '森山大道 (Daido Moriyama) 粗顆粒街頭晃動', prompt: 'in the style of Daido Moriyama, rough grainy black and white (Are, Bure, Boke), blurry motion, gritty high contrast snapshot, urban street photography' },
       { id: 'p_photog8', subCategory: 'masters', label: 'Nan Goldin 原始私密紀實光影', prompt: 'in the style of Nan Goldin, raw snapshot aesthetic, candid direct flash, saturated moody neon interior, emotional cinematic intimacy' },
 
-      // 2. 鏡頭焦段與光學 (Lenses & Optics)
+      // 2. 鏡頭焦段與特殊光學 (Lenses & Special Optics)
       { id: 'p_lens1', subCategory: 'lenses', label: '變形寬銀幕電影鏡頭 (Anamorphic)', prompt: 'shot on anamorphic lens, 2.39:1 widescreen cinematic ratio, horizontal blue streak flare, oval optical bokeh, shallow depth of field' },
       { id: 'p_lens2', subCategory: 'lenses', label: '85mm f/1.2 頂級人像極淺景深', prompt: 'shot on 85mm f/1.2 prime lens, razor sharp eye focus, creamy dreamy background falloff, three-dimensional subject isolation' },
       { id: 'p_lens3', subCategory: 'lenses', label: '24mm 電影級超廣角透視張力', prompt: 'shot on 24mm wide angle cinema lens, dramatic expansive perspective, sweeping leading lines, deep environmental depth' },
@@ -171,24 +267,33 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
       { id: 'p_lens6', subCategory: 'lenses', label: '魚眼鏡頭極致球形畸變 (Fisheye)', prompt: 'fisheye lens distortion, 180-degree spherical field of view, dramatic curved horizon, dynamic bubble perspective' },
       { id: 'p_lens7', subCategory: 'lenses', label: '復古電影柔焦鏡/黑柔濾鏡 (Black Pro-Mist)', prompt: 'shot with 1/4 Black Pro-Mist filter, bloomed organic highlights, lowered digital contrast, dreamy soft vintage glow' },
       { id: 'p_lens8', subCategory: 'lenses', label: '望遠長焦壓縮感 (200mm Telephoto)', prompt: 'shot on 200mm telephoto lens, intense background compression, layered graphic depth, flattened spatial perspective' },
+      { id: 'p_lens9', subCategory: 'lenses', label: '針孔相機復古暗箱 (Pinhole Camera)', prompt: 'pinhole camera photography, infinite depth of field, natural soft vignetting, subtle chromatic blurring, vintage lo-fi aesthetic' },
+      { id: 'p_lens10', subCategory: 'lenses', label: '電子顯微鏡超微觀 (Electron Microscopy)', prompt: 'scanning electron microscope photography (SEM), extreme scientific magnification, nanoscale micro surface relief, false color grading' },
+      { id: 'p_lens11', subCategory: 'lenses', label: '衛星空拍遙感地景 (Satellite Imagery)', prompt: 'high-altitude satellite earth observation imagery, orbital top-down macro texture, geological topography, synthetic aperture view' },
 
-      // 3. 光影調校與氛圍 (Lighting & Atmospheres)
-      { id: 'p1', subCategory: 'lighting', label: '柔和漫射柔光箱', prompt: 'soft diffused studio lighting, gentle gradient shadows, wrap-around illumination' },
-      { id: 'p2', subCategory: 'lighting', label: '電影級輪廓光/邊緣光', prompt: 'cinematic rim lighting, dramatic edge highlights, separating backlight' },
-      { id: 'p3', subCategory: 'lighting', label: '倫勃朗經典三角光', prompt: 'Rembrandt lighting, classic portrait chiaroscuro, luminous cheek triangle' },
-      { id: 'p4', subCategory: 'lighting', label: '黃金時刻落日暖陽', prompt: 'golden hour lighting, warm ambient low-angled sunlight, glowing atmospheric haze' },
-      { id: 'p5', subCategory: 'lighting', label: '藍調時刻冷冽微光', prompt: 'blue hour atmosphere, cool twilight ambient tones, tranquil melancholic mood' },
-      { id: 'p7', subCategory: 'lighting', label: '慢門長曝光動態光軌', prompt: 'long exposure photography, smooth silky motion blur, luminous kinetic light trails' },
-      { id: 'p8', subCategory: 'lighting', label: '底片雙重曝光疊影', prompt: 'double exposure photography, surreal silhouette blended overlay' },
+      // 3. 光影調校與光源氛圍 (Lighting & Atmospheres)
+      { id: 'p1', subCategory: 'lighting', label: '柔和漫射柔光箱 (Soft Diffused)', prompt: 'soft diffused studio lighting, gentle gradient shadows, wrap-around illumination' },
+      { id: 'p2', subCategory: 'lighting', label: '電影級輪廓光/邊緣光 (Rim Lighting)', prompt: 'cinematic rim lighting, dramatic edge highlights, separating backlight' },
+      { id: 'p3', subCategory: 'lighting', label: '倫勃朗經典三角光 (Rembrandt)', prompt: 'Rembrandt lighting, classic portrait chiaroscuro, luminous cheek triangle' },
+      { id: 'p4', subCategory: 'lighting', label: '黃金時刻落日暖陽 (Golden Hour)', prompt: 'golden hour lighting, warm ambient low-angled sunlight, glowing atmospheric haze' },
+      { id: 'p5', subCategory: 'lighting', label: '藍調時刻冷冽微光 (Blue Hour)', prompt: 'blue hour atmosphere, cool twilight ambient tones, tranquil melancholic mood' },
+      { id: 'p7', subCategory: 'lighting', label: '慢門長曝光動態光軌 (Long Exposure)', prompt: 'long exposure photography, smooth silky motion blur, luminous kinetic light trails' },
+      { id: 'p8', subCategory: 'lighting', label: '底片雙重曝光疊影 (Double Exposure)', prompt: 'double exposure photography, surreal silhouette blended overlay' },
       { id: 'p12', subCategory: 'lighting', label: '35mm 復古膠卷顆粒 (Kodak Portra)', prompt: '35mm vintage film photography, authentic organic grain, Kodak Portra 400 warm skin tones' },
-      { id: 'p13', subCategory: 'lighting', label: '賽博龐克雙色霓虹對比', prompt: 'cyberpunk dual neon lighting, high-contrast cyan and magenta split illumination' },
-      { id: 'p14', subCategory: 'lighting', label: '電影級丁達爾體積光/耶穌光', prompt: 'cinematic volumetric lighting, dusty sunbeams, atmospheric God rays, Tyndall effect' },
+      { id: 'p13', subCategory: 'lighting', label: '賽博龐克雙色霓虹對比 (Cyber Neon)', prompt: 'cyberpunk dual neon lighting, high-contrast cyan and magenta split illumination' },
+      { id: 'p14', subCategory: 'lighting', label: '電影級丁達爾體積光/耶穌光 (God Rays)', prompt: 'cinematic volumetric lighting, dusty sunbeams, atmospheric God rays, Tyndall effect' },
       { id: 'p15', subCategory: 'lighting', label: '低調暗部光影 (Low-Key Moody)', prompt: 'low-key lighting, deep rich shadows, mysterious chiaroscuro mood' },
       { id: 'p16', subCategory: 'lighting', label: '高調透亮清新光 (High-Key Ethereal)', prompt: 'high-key lighting, bright airy ethereal aesthetic, soft glowing highlights' },
-      { id: 'p17', subCategory: 'lighting', label: '逆光強烈剪影張力', prompt: 'backlit silhouette, strong high contrast graphic outline, golden edge glow' },
-      { id: 'p18', subCategory: 'lighting', label: '前衛直閃/環形閃光燈 (Direct Flash)', prompt: 'direct on-camera flash, hard shadow edge, 90s party snapshot, high-fashion gloss' }
+      { id: 'p17', subCategory: 'lighting', label: '逆光強烈剪影張力 (Backlit Silhouette)', prompt: 'backlit silhouette, strong high contrast graphic outline, golden edge glow' },
+      { id: 'p18', subCategory: 'lighting', label: '前衛直閃/環形閃光燈 (Direct Flash)', prompt: 'direct on-camera flash, hard shadow edge, 90s party snapshot, high-fashion gloss' },
+      { id: 'p19', subCategory: 'lighting', label: '溫暖搖曳燭光氛圍 (Candlelight Glow)', prompt: 'flickering warm candlelight illumination, intimate low-light ambiance, soft golden flame reflections' },
+      { id: 'p20', subCategory: 'lighting', label: '紫外線黑光螢光 (UV Blacklight)', prompt: 'ultraviolet blacklight glow, neon fluorescent emission, radioactive luminescent details' }
     ]
   },
+
+  // ==========================================
+  // 3. 視角與構圖 (Angles & Composition)
+  // ==========================================
   composition: {
     id: 'composition',
     name: '視角與構圖',
@@ -204,51 +309,368 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
       { id: 'c_sideview', subCategory: 'perspective', label: 'Sideview / 側面平視視角 (Side Profile View)', prompt: 'side profile view, 90-degree lateral perspective, orthogonal elevation view, clean silhouette' },
       { id: 'c_frontview', subCategory: 'perspective', label: 'Frontview / 正面平視視角 (Straight-On Front View)', prompt: 'straight-on front eye-level view, direct symmetrical frontal perspective, orthogonal elevation' },
       { id: 'c_45deg', subCategory: 'perspective', label: '45° Angle / 45度斜角立體透視 (Three-Quarter Angle)', prompt: 'elevated 45-degree angle perspective, three-quarter angle product view, dynamic diagonal depth' },
-      { id: 'c1', subCategory: 'geometry', label: '經典三分法', prompt: 'rule of thirds composition, balanced focal point' },
-      { id: 'c2', subCategory: 'geometry', label: '絕對對稱美學', prompt: 'perfect symmetrical composition, geometric equilibrium' },
-      { id: 'c3', subCategory: 'perspective', label: '鳥瞰空拍視角', prompt: 'aerial bird-eye view, drone photography, top-down perspective' },
-      { id: 'c4', subCategory: 'perspective', label: '仰視低角度張力', prompt: 'low angle worm-eye view, imposing perspective, heroic framing' },
-      { id: 'c5', subCategory: 'perspective', label: '荷蘭角傾斜構圖', prompt: 'Dutch angle shot, dynamic tilted perspective, tension' },
-      { id: 'c6', subCategory: 'geometry', label: '透視引導線', prompt: 'strong leading lines, vanishing point perspective' },
-      { id: 'c7', subCategory: 'geometry', label: '負空間/留白美學', prompt: 'minimalist negative space, elegant breathing room' },
-      { id: 'c8', subCategory: 'geometry', label: '畫中畫自然框景', prompt: 'frame within a frame composition, layered foreground' },
-      { id: 'c9', subCategory: 'perspective', label: '等距軸測視角', prompt: 'isometric view, orthographic projection, 3D diorama angle' },
-      { id: 'c10', subCategory: 'geometry', label: '黃金螺旋構圖', prompt: 'golden ratio spiral composition, harmonious proportions' },
-      { id: 'c11', subCategory: 'perspective', label: '極致特寫', prompt: 'extreme close-up shot, intense focal point' },
-      { id: 'c12', subCategory: 'geometry', label: '動態對角線構圖', prompt: 'dynamic diagonal composition, kinetic energy flow' }
+      { id: 'c1', subCategory: 'geometry', label: '經典三分法 (Rule of Thirds)', prompt: 'rule of thirds composition, balanced focal point' },
+      { id: 'c2', subCategory: 'geometry', label: '絕對對稱美學 (Symmetry)', prompt: 'perfect symmetrical composition, geometric equilibrium' },
+      { id: 'c3', subCategory: 'perspective', label: '鳥瞰空拍視角 (Bird-Eye)', prompt: 'aerial bird-eye view, drone photography, top-down perspective' },
+      { id: 'c4', subCategory: 'perspective', label: '仰視低角度張力 (Worm-Eye)', prompt: 'low angle worm-eye view, imposing perspective, heroic framing' },
+      { id: 'c5', subCategory: 'perspective', label: '荷蘭角傾斜構圖 (Dutch Tilt)', prompt: 'Dutch angle shot, dynamic tilted perspective, tension' },
+      { id: 'c6', subCategory: 'geometry', label: '透視引導線 (Leading Lines)', prompt: 'strong leading lines, vanishing point perspective' },
+      { id: 'c7', subCategory: 'geometry', label: '負空間/留白美學 (Negative Space)', prompt: 'minimalist negative space, elegant breathing room' },
+      { id: 'c8', subCategory: 'geometry', label: '畫中畫自然框景 (Frame in Frame)', prompt: 'frame within a frame composition, layered foreground' },
+      { id: 'c9', subCategory: 'perspective', label: '等距軸測視角 (Isometric)', prompt: 'isometric projection camera angle, 30-degree axonometric perspective, orthographic framing, realistic cinematic lighting and shadow depth, photorealistic architectural scale' },
+      { id: 'c10', subCategory: 'geometry', label: '黃金螺旋構圖 (Golden Spiral)', prompt: 'golden ratio spiral composition, harmonious proportions' },
+      { id: 'c11', subCategory: 'perspective', label: '極致特寫 (Extreme Close-Up)', prompt: 'extreme close-up shot, intense focal point' },
+      { id: 'c12', subCategory: 'geometry', label: '動態對角線構圖 (Diagonal)', prompt: 'dynamic diagonal composition, kinetic energy flow' }
     ]
   },
+
+  // ==========================================
+  // 4. 古典與近代藝術大師 (Classical & Art History) - 附帶時間軸 Tag
+  // ==========================================
   classicalArt: {
     id: 'classicalArt',
     name: '古典與近代藝術大師',
     englishName: 'Classical & Art History',
     icon: 'Palette',
-    description: '文藝復興、巴洛克、畢卡索立體派、達利超寫實等大師時代風格',
+    description: '文藝復興、巴洛克、莫內印象派、畢卡索立體派等大師時代傳承（支援美術史時間軸）',
     subCategories: [
-      { id: 'masters_avant', name: '近代先鋒與立體超寫實', englishName: 'Modern Avant-Garde', color: 'rose', desc: '畢卡索立體派、達利超寫實夢境、表現主義與象徵主義' },
-      { id: 'renaissance_classic', name: '文藝復興與古典莊嚴', englishName: 'Renaissance to Baroque', color: 'amber', desc: '達文西暈塗、巴洛克戲劇明暗、洛可可、荷蘭黃金時代' },
-      { id: 'impression_east', name: '印象點彩與東方風雅', englishName: 'Impressionism & East Art', color: 'teal', desc: '莫內印象派、秀拉點彩、日本浮世繪、慕夏新藝術' }
+      { id: 'medieval_renaissance', name: '中世紀與文藝復興 (5-16世紀)', englishName: 'Medieval & Renaissance', color: 'amber', desc: '拜占庭金箔馬賽克、哥德彩繪玻璃、達文西、米開朗基羅、波提切利' },
+      { id: 'baroque_romantic', name: '巴洛克、洛可可與浪漫主義 (17-19世紀)', englishName: 'Baroque to Romanticism', color: 'rose', desc: '卡拉瓦喬明暗對照、維梅爾、林布蘭、洛可可、佛烈德利赫、浮世繪' },
+      { id: 'impression_symbol', name: '印象派、後印象與新藝術 (19-20世紀初)', englishName: 'Impressionism & Art Nouveau', color: 'teal', desc: '莫內印象派、秀拉點彩、梵谷、塞尚、慕夏新藝術、克林姆金箔、孟克' },
+      { id: 'modern_avant', name: '現代先鋒與立體超現實 (20世紀)', englishName: 'Modern Avant-Garde', color: 'indigo', desc: '畢卡索立體派、達利超寫實夢境、馬諦斯野獸派、康丁斯基抽象主義' }
     ],
     items: [
-      { id: 'ca16', subCategory: 'masters_avant', label: '畢卡索立體派幾何碎裂 (Picasso)', prompt: 'Cubism style, in the style of Pablo Picasso, fractured geometric planes, multiple viewpoints, angular abstracted forms, iconic cubist portraiture' },
-      { id: 'ca17', subCategory: 'masters_avant', label: '達利超寫實主義與融化夢境 (Dali)', prompt: 'Surrealism, in the style of Salvador Dali, hyper-realistic uncanny dreamscapes, melting clocks, bizarre desert juxtaposition, metaphysical symbolism, razor-sharp illusionism' },
-      { id: 'ca1', subCategory: 'renaissance_classic', label: '文藝復興古典美學', prompt: 'Italian High Renaissance style, Leonardo da Vinci sfumato, graceful realism' },
-      { id: 'ca2', subCategory: 'renaissance_classic', label: '巴洛克戲劇明暗', prompt: 'Baroque style, Caravaggio chiaroscuro, intense dramatic atmosphere' },
-      { id: 'ca3', subCategory: 'renaissance_classic', label: '洛可可優雅華麗', prompt: 'Rococo aesthetic, pastel palette, ornate filigree details, Fragonard style' },
-      { id: 'ca4', subCategory: 'renaissance_classic', label: '浪漫主義崇高壯闊', prompt: 'Romanticism art style, Caspar David Friedrich sublime mood, sweeping landscapes' },
-      { id: 'ca5', subCategory: 'impression_east', label: '印象派自然光斑', prompt: 'Impressionism, Claude Monet dabbed brushwork, plein air luminous color vibrance' },
-      { id: 'ca6', subCategory: 'impression_east', label: '後印象派點彩畫派', prompt: 'Pointillism, Georges Seurat dot technique, vibrant optical color mixing' },
-      { id: 'ca7', subCategory: 'impression_east', label: '日本江戶浮世繪', prompt: 'Ukiyo-e woodblock print style, Hokusai wave dynamics, clean outlines' },
-      { id: 'ca8', subCategory: 'impression_east', label: '新藝術運動自然曲線', prompt: 'Art Nouveau, Alphonse Mucha sinuous organic lines, floral ornamental borders' },
-      { id: 'ca9', subCategory: 'impression_east', label: '裝飾藝術幾何奢華', prompt: 'Art Deco style, lavish geometric symmetry, gilded gold leaf luxury' },
-      { id: 'ca10', subCategory: 'masters_avant', label: '表現主義強烈情感', prompt: 'German Expressionism, Edvard Munch emotional intensity, distorted bold brushstrokes' },
-      { id: 'ca11', subCategory: 'masters_avant', label: '象徵主義神秘夢境', prompt: 'Symbolism art style, Gustav Klimt patterned gold leaf, esoteric mystical mood' },
-      { id: 'ca12', subCategory: 'impression_east', label: '前拉斐爾派細膩自然', prompt: 'Pre-Raphaelite Brotherhood style, vivid botanical realism, ethereal medievalism' },
-      { id: 'ca13', subCategory: 'renaissance_classic', label: '荷蘭黃金時代靜物', prompt: 'Dutch Golden Age painting, Vermeer soft window light, rich tactile textures' },
-      { id: 'ca14', subCategory: 'renaissance_classic', label: '哥德式大教堂彩繪玻璃', prompt: 'Gothic stained glass art, luminous medieval sacred aesthetic, leaded lines' },
-      { id: 'ca15', subCategory: 'renaissance_classic', label: '拜占庭金箔馬賽克', prompt: 'Byzantine gold mosaic style, flat sacred iconography, gilded tesserae' }
+      // 1. 中世紀與早期 (Medieval)
+      { 
+        id: 'ca15', 
+        subCategory: 'medieval_renaissance', 
+        label: '拜占庭金箔馬賽克聖像', 
+        prompt: 'Byzantine gold mosaic style, flat sacred iconography, gilded glass tesserae, glowing spiritual halo, medieval majestic mosaic',
+        timeline: {
+          era: '5 - 15 世紀',
+          period: '拜占庭藝術',
+          yearRange: 'c. 500 - 1450',
+          order: 1,
+          historicalContext: '東羅馬帝國宗教藝術核心，採用金色與彩色玻璃小方塊拼貼，強調永恆與神聖超脫感。'
+        }
+      },
+      { 
+        id: 'ca14', 
+        subCategory: 'medieval_renaissance', 
+        label: '哥德式大教堂彩繪玻璃', 
+        prompt: 'Gothic stained glass art, luminous medieval sacred aesthetic, leaded lines, jewel-toned sunlight transmission, rose window geometry',
+        timeline: {
+          era: '12 - 15 世紀',
+          period: '哥德式藝術',
+          yearRange: 'c. 1150 - 1450',
+          order: 1,
+          historicalContext: '伴隨高聳入雲的大教堂建築興起，透過鉛條與寶石般彩色玻璃引入「神聖光芒」。'
+        }
+      },
+
+      // 2. 文藝復興 (Renaissance)
+      { 
+        id: 'ca1', 
+        subCategory: 'medieval_renaissance', 
+        label: '達文西漸隱暈塗法 (Da Vinci)', 
+        prompt: 'Italian High Renaissance style, in the style of Leonardo da Vinci, sfumato soft smoky transitions, classical proportions, golden ratio harmony, painterly depth',
+        timeline: {
+          era: '15 - 16 世紀',
+          period: '文藝復興全盛期',
+          yearRange: 'c. 1490 - 1520',
+          order: 2,
+          historicalContext: '義大利文藝復興巔峰，以無筆觸痕跡的「漸隱暈塗法」融合解剖學與自然透視。'
+        }
+      },
+      { 
+        id: 'ca_botticelli', 
+        subCategory: 'medieval_renaissance', 
+        label: '波提切利唯美線條與維納斯 (Botticelli)', 
+        prompt: 'in the style of Sandro Botticelli, early Renaissance elegance, sinuous flowing linear contour, pastel tempera palette, mythological ethereal grace',
+        timeline: {
+          era: '15 世紀末',
+          period: '早期文藝復興',
+          yearRange: 'c. 1470 - 1500',
+          order: 2,
+          historicalContext: '佛羅倫斯黃金時代，將希臘神話與詩意線條融為一體，洋溢輕盈唯美的貴族氣質。'
+        }
+      },
+      { 
+        id: 'ca_michelangelo', 
+        subCategory: 'medieval_renaissance', 
+        label: '米開朗基羅人體雕塑力量 (Michelangelo)', 
+        prompt: 'in the style of Michelangelo, Sistine Chapel monumental fresco, powerful muscular anatomy, dynamic contrapposto tension, heroic classical grandeur',
+        timeline: {
+          era: '16 世紀初',
+          period: '盛期文藝復興',
+          yearRange: 'c. 1508 - 1540',
+          order: 2,
+          historicalContext: '西斯汀禮拜堂天頂畫與雕塑，呈現如大理石雕刻般強健有力的人體解剖張力。'
+        }
+      },
+
+      // 3. 巴洛克與荷蘭黃金時代 (Baroque & Dutch Golden Age)
+      { 
+        id: 'ca2', 
+        subCategory: 'baroque_romantic', 
+        label: '卡拉瓦喬巴洛克戲劇明暗 (Caravaggio)', 
+        prompt: 'Baroque style, in the style of Caravaggio, dramatic tenebrism chiaroscuro, intense spotlight contrast, pitch black background, emotional theatrical realism',
+        timeline: {
+          era: '17 世紀初',
+          period: '巴洛克藝術',
+          yearRange: 'c. 1600 - 1630',
+          order: 3,
+          historicalContext: '徹底打破文藝復興的平穩，以強烈的「暗色調主義 (Tenebrism)」聚光燈開創戲劇性革命。'
+        }
+      },
+      { 
+        id: 'ca_rembrandt', 
+        subCategory: 'baroque_romantic', 
+        label: '林布蘭深邃金棕光影 (Rembrandt)', 
+        prompt: 'in the style of Rembrandt van Rijn, Dutch Baroque master, golden luminous chiaroscuro, psychological portrait depth, rich impasto textures, glowing cheek highlight',
+        timeline: {
+          era: '17 世紀中葉',
+          period: '荷蘭巴洛克',
+          yearRange: 'c. 1630 - 1669',
+          order: 3,
+          historicalContext: '荷蘭畫聖，精通金棕色溫潤光暈與人物內心深層靈魂刻畫，光影如燭火般深邃。'
+        }
+      },
+      { 
+        id: 'ca13', 
+        subCategory: 'baroque_romantic', 
+        label: '維梅爾窗邊柔和室內光 (Vermeer)', 
+        prompt: 'Dutch Golden Age painting, in the style of Johannes Vermeer, soft natural left window lighting, ultramarine blue and yellow ochre, tranquil domestic interior, photorealistic stillness',
+        timeline: {
+          era: '17 世紀中晚期',
+          period: '荷蘭黃金時代',
+          yearRange: 'c. 1650 - 1675',
+          order: 3,
+          historicalContext: '台夫特之光，以精準的光學暗箱視角捕捉靜謐日常，青金石藍與日光粒子令人屏息。'
+        }
+      },
+
+      // 4. 洛可可與浪漫主義 (Rococo & Romanticism)
+      { 
+        id: 'ca3', 
+        subCategory: 'baroque_romantic', 
+        label: '洛可可優雅宮廷粉彩 (Fragonard)', 
+        prompt: 'Rococo aesthetic, in the style of Jean-Honore Fragonard, pastel macaron palette, delicate filigree, playful lighthearted elegance, soft feathery brushwork',
+        timeline: {
+          era: '18 世紀中葉',
+          period: '洛可可宮廷',
+          yearRange: 'c. 1730 - 1780',
+          order: 4,
+          historicalContext: '法國凡爾賽宮廷貴族享樂主義，以柔和粉綠、粉紅與精巧貝殼渦卷線條為標誌。'
+        }
+      },
+      { 
+        id: 'ca4', 
+        subCategory: 'baroque_romantic', 
+        label: '浪漫主義自然崇高孤寂 (Friedrich)', 
+        prompt: 'Romanticism art style, in the style of Caspar David Friedrich, sublime atmospheric nature, solitary contemplative figure, misty mountain chasm, philosophical mood',
+        timeline: {
+          era: '18 - 19 世紀初',
+          period: '浪漫主義',
+          yearRange: 'c. 1780 - 1840',
+          order: 4,
+          historicalContext: '反思啟蒙理性，強調人類在大自然浩瀚宇宙面前的孤獨、敬畏與崇高（The Sublime）情感。'
+        }
+      },
+      { 
+        id: 'ca7', 
+        subCategory: 'baroque_romantic', 
+        label: '日本江戶浮世繪木刻版畫 (Hokusai)', 
+        prompt: 'Ukiyo-e woodblock print style, in the style of Katsushika Hokusai, dynamic wave foam, clean inked outlines, flat decorative color planes, Edo period aesthetic',
+        timeline: {
+          era: '19 世紀前半',
+          period: '江戶浮世繪',
+          yearRange: 'c. 1820 - 1860',
+          order: 4,
+          historicalContext: '葛飾北齋與歌川廣重木刻版畫，大膽俯仰透視與強烈輪廓線深深震撼了後續歐洲印象派。'
+        }
+      },
+      { 
+        id: 'ca12', 
+        subCategory: 'impression_symbol', 
+        label: '前拉斐爾派細膩自然花草 (Pre-Raphaelite)', 
+        prompt: 'Pre-Raphaelite Brotherhood style, in the style of John Everett Millais, botanical precision, glowing translucent colors, ethereal romantic medievalism',
+        timeline: {
+          era: '19 世紀中葉',
+          period: '前拉斐爾派',
+          yearRange: 'c. 1848 - 1890',
+          order: 4,
+          historicalContext: '英國青年畫家團體，主張回歸拉斐爾之前的純真自然，植物細節與浪漫敘事極其精緻。'
+        }
+      },
+
+      // 5. 印象派與後印象派 (Impressionism & Post-Impressionism)
+      { 
+        id: 'ca5', 
+        subCategory: 'impression_symbol', 
+        label: '莫內印象派戶外日光斑駁 (Monet)', 
+        prompt: 'Impressionism, in the style of Claude Monet, plein air dappled sunlight, broken color brushstrokes, atmospheric luminous vibrance, water lily reflections',
+        timeline: {
+          era: '19 世紀後期',
+          period: '印象派',
+          yearRange: 'c. 1872 - 1900',
+          order: 5,
+          historicalContext: '走出畫室在戶外捕捉瞬息萬變的光線與色彩，碎筆快速點畫奠定現代色彩學。'
+        }
+      },
+      { 
+        id: 'ca6', 
+        subCategory: 'impression_symbol', 
+        label: '秀拉後印象點彩畫派 (Pointillism / Seurat)', 
+        prompt: 'Pointillism, in the style of Georges Seurat, meticulous tiny dot technique, optical color blending, scientific chromoluminarism, structured composition',
+        timeline: {
+          era: '19 世紀末',
+          period: '新印象派 / 點彩',
+          yearRange: 'c. 1884 - 1895',
+          order: 5,
+          historicalContext: '以光學混色理論為依據，用純色微小色點鋪滿畫布，在觀眾視網膜上自然融合出震顫光感。'
+        }
+      },
+      { 
+        id: 'ca_vangogh', 
+        subCategory: 'impression_symbol', 
+        label: '梵谷後印象派狂熱旋渦筆觸 (Van Gogh)', 
+        prompt: 'in the style of Vincent van Gogh, post-impressionism, swirling dynamic brushstrokes, thick impasto oil paint, vibrant cobalt blue and cadmium yellow, raw passionate emotion',
+        timeline: {
+          era: '19 世紀末',
+          period: '後印象派',
+          yearRange: 'c. 1885 - 1890',
+          order: 5,
+          historicalContext: '將自然轉化為內心熊熊燃燒的生命力，星夜旋渦筆觸與濃烈黃藍色彩成為藝術史傳奇。'
+        }
+      },
+      { 
+        id: 'ca_cezanne', 
+        subCategory: 'impression_symbol', 
+        label: '塞尚幾何結構後印象 (Cezanne)', 
+        prompt: 'in the style of Paul Cezanne, post-impressionist structural planes, constructive brushstrokes, geometric volume of cylinders and spheres, analytical color modulation',
+        timeline: {
+          era: '19 世紀末 - 20 世紀初',
+          period: '後印象派 / 現代之父',
+          yearRange: 'c. 1885 - 1906',
+          order: 5,
+          historicalContext: '「現代藝術之父」，將自然物體歸納為圓柱、球體與圓錐，直接啟發了畢卡索立體派。'
+        }
+      },
+
+      // 6. 新藝術與象徵表現 (Art Nouveau, Symbolism, Expressionism)
+      { 
+        id: 'ca8', 
+        subCategory: 'impression_symbol', 
+        label: '慕夏新藝術運動流暢藤蔓 (Mucha)', 
+        prompt: 'Art Nouveau, in the style of Alphonse Mucha, sinuous flowing organic lines, ornate botanical filigree border, pastel decorative poster, idealized feminine grace',
+        timeline: {
+          era: '19 世紀末 - 20 世紀初',
+          period: '新藝術運動 (Belle Epoque)',
+          yearRange: 'c. 1895 - 1914',
+          order: 6,
+          historicalContext: '世紀末美好年代（Belle Époque），以植物生長曲線、波浪秀髮與裝飾性邊框席捲巴黎。'
+        }
+      },
+      { 
+        id: 'ca11', 
+        subCategory: 'impression_symbol', 
+        label: '克林姆象徵主義黃金時期 (Klimt)', 
+        prompt: 'Symbolism, in the style of Gustav Klimt, golden phase patterned gilding, Byzantine gold leaf mosaic, intricate sensual geometry, opulent decorative masterpiece',
+        timeline: {
+          era: '20 世紀初',
+          period: '維也納分離派 / 象徵主義',
+          yearRange: 'c. 1898 - 1918',
+          order: 6,
+          historicalContext: '維也納分離派領袖，將金箔裝飾、幾何圖騰與神祕夢幻的人體融合成極致奢華詩篇。'
+        }
+      },
+      { 
+        id: 'ca10', 
+        subCategory: 'impression_symbol', 
+        label: '孟克表現主義內心吶喊 (Munch)', 
+        prompt: 'Expressionism, in the style of Edvard Munch, intense emotional psychological anxiety, undulating warped lines, bold contrasting blood-orange skies, raw psychic scream',
+        timeline: {
+          era: '20 世紀初',
+          period: '表現主義',
+          yearRange: 'c. 1893 - 1910',
+          order: 6,
+          historicalContext: '直接宣洩現代人的孤獨、焦慮與精神吶喊，波浪狀扭曲背景深深影響了德國表現主義。'
+        }
+      },
+      { 
+        id: 'ca9', 
+        subCategory: 'modern_avant', 
+        label: '裝飾藝術奢華幾何對稱 (Art Deco)', 
+        prompt: 'Art Deco style, lavish 1920s geometric symmetry, streamlined architectural luxury, gilded metallic gold and obsidian black, Great Gatsby opulence',
+        timeline: {
+          era: '20 世紀 20-30 年代',
+          period: '裝飾藝術 (Art Deco)',
+          yearRange: 'c. 1920 - 1939',
+          order: 6,
+          historicalContext: '大亨小傳爵士時代（Jazz Age），以摩登摩天大樓線條、太陽放射圖騰與鍍金幾何風靡全球。'
+        }
+      },
+
+      // 7. 現代先鋒與立體超寫實 (Modern Avant-Garde)
+      { 
+        id: 'ca16', 
+        subCategory: 'modern_avant', 
+        label: '畢卡索立體派幾何碎裂 (Picasso)', 
+        prompt: 'Cubism style, in the style of Pablo Picasso, fractured geometric planes, multiple simultaneous viewpoints, angular abstracted forms, iconic analytical cubism',
+        timeline: {
+          era: '20 世紀前半',
+          period: '立體派 (Cubism)',
+          yearRange: 'c. 1907 - 1930',
+          order: 7,
+          historicalContext: '打破文藝復興以來單一焦點透視，將主體拆解為多個幾何維度同時重組於二維平面。'
+        }
+      },
+      { 
+        id: 'ca17', 
+        subCategory: 'modern_avant', 
+        label: '達利超寫實主義與融化夢境 (Dali)', 
+        prompt: 'Surrealism, in the style of Salvador Dali, hyper-realistic uncanny dreamscapes, melting clocks, bizarre desert juxtaposition, metaphysical symbolism, razor-sharp illusionism',
+        timeline: {
+          era: '20 世紀中葉',
+          period: '超現實主義 (Surrealism)',
+          yearRange: 'c. 1924 - 1960',
+          order: 7,
+          historicalContext: '受佛洛伊德潛意識啟發，以極致精密的寫實手法描繪融化時鐘與荒誕夢境空間。'
+        }
+      },
+      { 
+        id: 'ca_matisse', 
+        subCategory: 'modern_avant', 
+        label: '馬諦斯野獸派純色狂歡 (Matisse)', 
+        prompt: 'Fauvism, in the style of Henri Matisse, expressive pure primary colors, bold spontaneous flat shapes, joyful organic paper cutouts, liberated chromatic harmony',
+        timeline: {
+          era: '20 世紀初',
+          period: '野獸派 (Fauvism)',
+          yearRange: 'c. 1905 - 1930',
+          order: 7,
+          historicalContext: '將色彩從自然客觀描繪中徹底解放，用最純粹飽和的紅黃藍綠傳遞純粹歡愉。'
+        }
+      },
+      { 
+        id: 'ca_kandinsky', 
+        subCategory: 'modern_avant', 
+        label: '康丁斯基抽象音樂旋律 (Kandinsky)', 
+        prompt: 'Abstract Art, in the style of Wassily Kandinsky, synesthetic visual music, dynamic floating geometric circles and vectors, spiritual explosive color rhythm',
+        timeline: {
+          era: '20 世紀初',
+          period: '抽象主義先驅',
+          yearRange: 'c. 1910 - 1940',
+          order: 7,
+          historicalContext: '純粹抽象藝術先驅，將繪畫比作無歌詞的交響樂，探討點、線、面與色彩的心靈共振。'
+        }
+      }
     ]
   },
+
+  // ==========================================
+  // 5. 現代與當代設計流派 (Modern Design Movements)
+  // ==========================================
   modernDesign: {
     id: 'modernDesign',
     name: '現代與當代藝術/設計流派',
@@ -263,62 +685,90 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
     items: [
       { id: 'md_psychedelic', subCategory: 'psychedelic_avant', label: '60s 迷幻藝術 (Psychedelic Art)', prompt: 'Psychedelic Art style, 1960s counterculture poster aesthetic, swirling optical patterns, vibrant neon kaleidoscopic colors, fluid organic distortion, trippy dreamscape' },
       { id: 'md3', subCategory: 'psychedelic_avant', label: '超現實主義迷幻夢境 (Surrealism)', prompt: 'Surrealism, Salvador Dali dreamlike juxtaposition, melting metaphysics, impossible architecture' },
-      { id: 'md1', subCategory: 'modernism_grid', label: '包浩斯功能理性主義', prompt: 'Bauhaus design aesthetic, clean functionalism, primary geometric shapes' },
-      { id: 'md2', subCategory: 'modernism_grid', label: '瑞士國際主義網格', prompt: 'Swiss International Typographic Style, structured asymmetric grid, modern minimalism' },
-      { id: 'md4', subCategory: 'modernism_grid', label: '純粹極簡主義', prompt: 'Contemporary Minimalism, serene simplicity, pristine reduction' },
-      { id: 'md5', subCategory: 'pop_future', label: '普普藝術大眾色彩', prompt: 'Pop Art style, Andy Warhol screenprint dots, bold saturated primary colors' },
-      { id: 'md6', subCategory: 'pop_future', label: '孟菲斯狂想幾何', prompt: 'Memphis Design movement, 80s quirky geometric patterns, vibrant contrast pastels' },
-      { id: 'md7', subCategory: 'modernism_grid', label: '俄羅斯構成主義', prompt: 'Russian Constructivism, bold red-black palette, diagonal typographic dynamism' },
-      { id: 'md8', subCategory: 'psychedelic_avant', label: '義大利未來主義', prompt: 'Futurism art, kinetic velocity, speed lines, mechanistic dynamism' },
-      { id: 'md9', subCategory: 'psychedelic_avant', label: '抽象表現主義潑墨', prompt: 'Abstract Expressionism, Jackson Pollock dynamic drip action painting, emotional raw strokes' },
-      { id: 'md10', subCategory: 'pop_future', label: '賽博龐克高科技低生活', prompt: 'Cyberpunk aesthetic, neon-drenched metropolis, holographic rain reflections' },
-      { id: 'md11', subCategory: 'pop_future', label: '蒸氣波復古夢幻', prompt: 'Vaporwave aesthetic, 90s aesthetic glitched nostalgia, pastel marble statues, retro sunset' },
-      { id: 'md12', subCategory: 'pop_future', label: '太陽龐克生態未來', prompt: 'Solarpunk aesthetic, utopian green architecture, sunlight and blooming lush foliage' },
-      { id: 'md13', subCategory: 'modernism_grid', label: '侘寂不完美日式哲學', prompt: 'Wabi-sabi aesthetic, earthy raw clay textures, weathered organic serenity' },
-      { id: 'md14', subCategory: 'modernism_grid', label: '粗獷主義混凝土美學', prompt: 'Brutalism architectural aesthetic, raw exposed concrete, massive monolithic forms' },
-      { id: 'md15', subCategory: 'pop_future', label: '低多邊形立體幾何', prompt: 'Low-poly art style, geometric faceted surfaces, isometric polygon styling' },
-      { id: 'md16', subCategory: 'psychedelic_avant', label: '歐普藝術視覺錯覺', prompt: 'Op Art, optical illusion patterns, black and white pulsating rhythmic waves' },
-      { id: 'md17', subCategory: 'psychedelic_avant', label: '酸性設計實驗先鋒', prompt: 'Acid Graphics, chromatic metallic chrome, trippy warped typography, liquid mercury' }
+      { id: 'md1', subCategory: 'modernism_grid', label: '包浩斯功能理性主義 (Bauhaus)', prompt: 'Bauhaus design aesthetic, clean functionalism, primary geometric shapes, form follows function, asymmetric balance' },
+      { id: 'md2', subCategory: 'modernism_grid', label: '瑞士國際主義網格 (Swiss Style)', prompt: 'Swiss International Typographic Style, structured asymmetric grid, modern minimalism, sans-serif clarity' },
+      { id: 'md4', subCategory: 'modernism_grid', label: '純粹極簡主義 (Minimalism)', prompt: 'Contemporary Minimalism, serene simplicity, pristine reduction, spacious negative space' },
+      { id: 'md5', subCategory: 'pop_future', label: '普普藝術大眾色彩 (Pop Art)', prompt: 'Pop Art style, Andy Warhol screenprint dots, bold saturated primary colors, mass culture repetition' },
+      { id: 'md6', subCategory: 'pop_future', label: '孟菲斯狂想幾何 (Memphis Design)', prompt: 'Memphis Design movement, 80s quirky geometric patterns, vibrant contrast pastels, squiggles and confetti' },
+      { id: 'md7', subCategory: 'modernism_grid', label: '俄羅斯構成主義 (Constructivism)', prompt: 'Russian Constructivism, bold red-black palette, diagonal typographic dynamism, industrial propaganda' },
+      { id: 'md8', subCategory: 'psychedelic_avant', label: '義大利未來主義 (Futurism)', prompt: 'Futurism art, kinetic velocity, speed lines, mechanistic dynamism, dynamic light fractures' },
+      { id: 'md9', subCategory: 'psychedelic_avant', label: '抽象表現主義潑墨 (Action Painting)', prompt: 'Abstract Expressionism, Jackson Pollock dynamic drip action painting, emotional raw strokes, energetic pigment splatter' },
+      { id: 'md10', subCategory: 'pop_future', label: '賽博龐克高科技低生活 (Cyberpunk)', prompt: 'Cyberpunk aesthetic, neon-drenched metropolis, holographic rain reflections, high-tech low-life' },
+      { id: 'md11', subCategory: 'pop_future', label: '蒸氣波復古夢幻 (Vaporwave)', prompt: 'Vaporwave aesthetic, 90s aesthetic glitched nostalgia, pastel marble statues, retro sunset grid' },
+      { id: 'md12', subCategory: 'pop_future', label: '太陽龐克生態未來 (Solarpunk)', prompt: 'Solarpunk aesthetic, utopian green architecture, sunlight and blooming lush foliage, stained glass solar tech' },
+      { id: 'md13', subCategory: 'modernism_grid', label: '侘寂不完美日式哲學 (Wabi-Sabi)', prompt: 'Wabi-sabi aesthetic, earthy raw clay textures, weathered organic serenity, beauty in imperfection' },
+      { id: 'md14', subCategory: 'modernism_grid', label: '粗獷主義混凝土美學 (Brutalism)', prompt: 'Brutalism architectural aesthetic, raw exposed concrete, massive monolithic forms, heavy shadow geometry' },
+      { id: 'md15', subCategory: 'pop_future', label: '低多邊形立體幾何 (Low-Poly)', prompt: 'Low-poly art style, geometric faceted surfaces, isometric polygon styling, clean pastel faceting' },
+      { id: 'md16', subCategory: 'psychedelic_avant', label: '歐普藝術視覺錯覺 (Op Art)', prompt: 'Op Art, optical illusion patterns, black and white pulsating rhythmic waves, perceptual vibration' },
+      { id: 'md17', subCategory: 'psychedelic_avant', label: '酸性設計實驗先鋒 (Acid Graphics)', prompt: 'Acid Graphics, chromatic metallic chrome, trippy warped typography, liquid mercury, dystopian rave' }
     ]
   },
+
+  // ==========================================
+  // 6. 風格繪畫、插畫與材質媒材 (Painting, Illustration & Textures)
+  //    重構細分為：水彩流體、手繪插畫繪本、傳統油彩厚塗、漫畫概念藝術、版畫工藝與光學3D
+  // ==========================================
   materials: {
     id: 'materials',
-    name: '插畫媒材與材質工藝',
-    englishName: 'Mediums & Textures',
+    name: '風格繪畫與插畫媒材',
+    englishName: 'Painting & Illustration Media',
     icon: 'Brush',
-    description: '水彩、油畫、陶藝、玻璃、3D渲染等材質觸感',
+    description: '水彩暈染、手繪插畫、油畫厚塗、日漫美漫概念與實體工藝',
     subCategories: [
-      { id: 'drawing', name: '手繪筆觸與插畫筆刷', englishName: 'Drawings & Brushstrokes', color: 'orange', desc: '小畫家滑鼠塗鴉、童趣蠟筆、水彩暈染、油畫刮刀、水墨' },
-      { id: 'craft', name: '實體工藝與手工印刷', englishName: 'Crafts & Printmaking', color: 'emerald', desc: '陶瓷釉面、黏土定格、剪紙、刺繡金線、孔版印刷' },
-      { id: 'optical_3d', name: '光學質感與3D渲染', englishName: '3D & Optical Finishes', color: 'blue', desc: '磨砂玻璃、金屬拉絲、彩色玻璃、環氧樹脂、Octane 3D' }
+      { id: 'watercolor_fluid', name: '水彩與流體暈染', englishName: 'Watercolor & Fluid Inks', color: 'cyan', desc: '透明水彩、濕畫法、不透明水粉、酒精墨水流體、東方水墨' },
+      { id: 'illustration_book', name: '手繪插畫與繪本', englishName: 'Illustration & Picture Books', color: 'orange', desc: '童趣蠟筆、兒童繪本、扁平向量、彩色鉛筆、小畫家塗鴉、復古卡通' },
+      { id: 'traditional_paint', name: '傳統油彩與素描', englishName: 'Traditional Oil & Sketch', color: 'amber', desc: '厚塗油畫刮刀、壓克力畫、炭筆素描、銅版微雕蝕刻、粉彩蠟筆' },
+      { id: 'manga_concept', name: '漫畫、動漫與概念藝術', englishName: 'Manga, Anime & Concept Art', color: 'rose', desc: '日系動漫賽璐璐、美漫黑白網點、新川洋司水墨機甲、概念厚塗、像素藝術' },
+      { id: 'print_craft_3d', name: '版畫印刷與立體質感', englishName: 'Printmaking, Craft & 3D', color: 'emerald', desc: '孔版印刷、絲網版畫、剪紙紙雕、黏土定格、磨砂玻璃、3D Octane' }
     ],
     items: [
-      { id: 'm_mspaint', subCategory: 'drawing', label: 'Windows 小畫家滑鼠拙劣塗鴉 (MS Paint Clumsy Doodles)', prompt: 'clumsy MS Paint drawing, naive amateur digital art, drawn with computer mouse, imperfect shaky pixelated lines, raw bright basic color fills, Microsoft Paint spray can airbrush texture, crude awkward charming doodle' },
-      { id: 'm_childish', subCategory: 'drawing', label: '天真童趣拙劣蠟筆畫 (Naive Child Drawing)', prompt: 'naive childish crayon drawing, primitive stick figures, messy uncoordinated scribbles, charmingly crude lines, paper texture' },
-      { id: 'm1', subCategory: 'drawing', label: '珠光透明水彩暈染', prompt: 'delicate transparent watercolor wash, wet-on-wet pigments, cold-press paper texture' },
-      { id: 'm2', subCategory: 'drawing', label: '厚塗油畫刮刀筆觸', prompt: 'heavy impasto oil painting, thick textural palette knife strokes, tactile paint peaks' },
-      { id: 'm3', subCategory: 'craft', label: '溫潤陶瓷釉面光澤', prompt: 'ceramic glazed pottery finish, celadon craquelure gloss, tactile clay' },
-      { id: 'm4', subCategory: 'optical_3d', label: '磨砂半透明玻璃', prompt: 'frosted translucent sea glass, soft internal light refraction, matte blur' },
-      { id: 'm5', subCategory: 'drawing', label: '東方水墨流動意境', prompt: 'traditional Chinese ink wash painting, Sumi-e brush dynamics, poetic atmospheric mist' },
-      { id: 'm6', subCategory: 'craft', label: '定格黏土捏塑定格', prompt: 'claymation stop-motion aesthetic, sculpted polymer clay with subtle fingerprint textures' },
-      { id: 'm7', subCategory: 'craft', label: '層次剪紙陰影浮雕', prompt: 'layered paper cut art, 3D papercraft depth, cast paper shadows, clean craft edges' },
-      { id: 'm8', subCategory: 'craft', label: '溫暖針織毛線紋理', prompt: 'cozy chunky knit wool yarn texture, intricate woven textile weave' },
-      { id: 'm9', subCategory: 'craft', label: '刺繡絲綢金線工藝', prompt: 'intricate silk embroidery, raised satin stitch threads, shimmering metallic threads' },
-      { id: 'm10', subCategory: 'craft', label: '孔版印刷復古錯位', prompt: 'Risograph print effect, halftone screen dot patterns, vibrant misregistered overlay inks' },
-      { id: 'm11', subCategory: 'craft', label: '絲網版畫印刷質感', prompt: 'silkscreen printmaking texture, flat gouache inks, distinct layered color blocks' },
-      { id: 'm12', subCategory: 'craft', label: '銅版微雕蝕刻細線', prompt: 'copperplate engraving etching, fine cross-hatching linework, vintage botanical print style' },
-      { id: 'm13', subCategory: 'craft', label: '燙金箔浮雕細節', prompt: 'embossed gold foil stamping, reflective gilded leaf accents, tactile luxury cardstock' },
-      { id: 'm14', subCategory: 'drawing', label: '粉彩柔和蠟筆筆觸', prompt: 'soft pastel chalk drawing, blended velvety dust textures, creamy crayon accents' },
-      { id: 'm15', subCategory: 'drawing', label: '炭筆粗獷素描', prompt: 'raw charcoal sketch, expressive tonal smudges, textured kraft paper' },
-      { id: 'm16', subCategory: 'optical_3d', label: '金屬拉絲與陽極氧化', prompt: 'brushed anodized metal surface, specular highlights, premium matte alloy' },
-      { id: 'm17', subCategory: 'optical_3d', label: '彩色玻璃幾何嵌合', prompt: 'tessellated stained glass panels, luminous jewel-toned transmission, black iron solder' },
-      { id: 'm18', subCategory: 'optical_3d', label: '水晶環氧樹脂封存', prompt: 'crystal clear epoxy resin casting, preserved suspended inclusions, hyper-glossy sheen' },
-      { id: 'm19', subCategory: 'optical_3d', label: 'Octane 頂級3D渲染', prompt: '3D Octane render, raytraced subsurface scattering, physically based rendering (PBR), Unreal Engine 5' },
-      { id: 'm20', subCategory: 'drawing', label: '向量極簡扁平插畫', prompt: 'clean flat vector illustration, smooth bezier curves, bold graphic silhouette' },
-      { id: 'm21', subCategory: 'optical_3d', label: '全息彩虹折射光膜', prompt: 'iridescent holographic foil texture, prismatic rainbow color shift' },
-      { id: 'm22', subCategory: 'craft', label: '古老羊皮紙斑駁質感', prompt: 'aged weathered parchment texture, sepia deckled edges, historical manuscript feel' }
+      // 1. 水彩與流體暈染 (Watercolor & Fluid Inks)
+      { id: 'm1', subCategory: 'watercolor_fluid', label: '珠光透明水彩暈染 (Transparent Watercolor)', prompt: 'delicate transparent watercolor wash, wet-on-wet pigments, cold-press paper texture, soft translucent bleeding edges, luminous poetic watercolor' },
+      { id: 'm_wet_watercolor', subCategory: 'watercolor_fluid', label: '大膽流動濕畫法水彩 (Fluid Wet-on-Wet)', prompt: 'expressive wet-on-wet watercolor painting, spontaneous pigment blooms, dripping liquid water edges, granulation texture on Arches paper' },
+      { id: 'm_gouache', subCategory: 'watercolor_fluid', label: '不透明水粉畫 (Matte Gouache Painting)', prompt: 'opaque gouache painting, velvety matte finish, flat bold vibrant colors, creamy smooth brush texture, designer gouache illustration' },
+      { id: 'm_alcohol_ink', subCategory: 'watercolor_fluid', label: '酒精墨水流動金邊 (Alcohol Ink Fluid Art)', prompt: 'fluid alcohol ink painting on Yupo paper, shimmering metallic gold leaf veins, organic translucent marbling, ethereal swirling layers' },
+      { id: 'm5', subCategory: 'watercolor_fluid', label: '東方宣紙水墨意境 (Chinese Ink Wash / Sumi-e)', prompt: 'traditional Chinese ink wash painting, Sumi-e brush dynamics, poetic atmospheric mist on Xuan paper, spontaneous calligraphy strokes' },
+
+      // 2. 手繪插畫與繪本風格 (Illustration & Picture Books)
+      { id: 'm_childish', subCategory: 'illustration_book', label: '天真童趣拙劣蠟筆畫 (Naive Child Crayon)', prompt: 'naive childish crayon drawing, primitive stick figures, messy uncoordinated scribbles, charmingly crude lines, rough paper grain texture' },
+      { id: 'm_storybook', subCategory: 'illustration_book', label: '溫馨兒童繪本插畫 (Children Storybook)', prompt: 'whimsical children book illustration, warm cozy storytelling, gentle gouache and colored pencil textures, charming storybook character art' },
+      { id: 'm20', subCategory: 'illustration_book', label: '向量極簡扁平插畫 (Flat Vector Illustration)', prompt: 'clean flat vector illustration, smooth bezier curves, bold graphic silhouette, minimalist modern geometry, editorial poster art' },
+      { id: 'm_colored_pencil', subCategory: 'illustration_book', label: '彩色鉛筆細膩排線 (Colored Pencil Art)', prompt: 'colored pencil drawing, delicate cross-hatching pencil strokes, visible paper tooth texture, soft layered blended hues' },
+      { id: 'm_mspaint', subCategory: 'illustration_book', label: 'Windows 小畫家拙劣塗鴉 (MS Paint Clumsy Doodles)', prompt: 'clumsy MS Paint drawing, naive amateur digital art, drawn with computer mouse, imperfect shaky pixelated lines, raw bright basic color fills, Microsoft Paint spray can airbrush texture, crude awkward charming doodle' },
+      { id: 'm_rubber_hose', subCategory: 'illustration_book', label: '1930s 復古橡皮管卡通 (Rubber Hose Cartoon)', prompt: '1930s vintage rubber hose animation style, pie eyes, bouncy bendy limbs, monochrome film grain, classic cartoon nostalgia' },
+
+      // 3. 傳統油彩與素描 (Traditional Oil & Sketch)
+      { id: 'm2', subCategory: 'traditional_paint', label: '厚塗油畫刮刀筆觸 (Impasto Palette Knife)', prompt: 'heavy impasto oil painting, thick textural palette knife strokes, tactile paint peaks, rich oily sheen, sculptural brushwork' },
+      { id: 'm_acrylic', subCategory: 'traditional_paint', label: '當代壓克力畫鮮明質感 (Acrylic Canvas)', prompt: 'contemporary acrylic painting on stretched canvas, vivid crisp color blocks, dynamic expressive brushwork, satin finish' },
+      { id: 'm14', subCategory: 'traditional_paint', label: '粉彩柔和蠟筆筆觸 (Soft Pastel Chalk)', prompt: 'soft pastel chalk drawing, blended velvety dust textures, creamy crayon accents, atmospheric blurred edges' },
+      { id: 'm15', subCategory: 'traditional_paint', label: '炭筆粗獷素描 (Raw Charcoal Sketch)', prompt: 'raw expressive charcoal sketch, bold black smudges, dramatic chiaroscuro shading, textured heavyweight kraft paper' },
+      { id: 'm12', subCategory: 'traditional_paint', label: '銅版微雕蝕刻細線 (Copperplate Engraving)', prompt: 'copperplate engraving etching, fine cross-hatching linework, vintage antique botanical encyclopedia illustration, intaglio print' },
+
+      // 4. 漫畫、動漫與概念藝術 (Manga, Anime & Concept Art)
+      { id: 'm_anime_cel', subCategory: 'manga_concept', label: '日系動漫賽璐璐風 (Anime Cel Shading)', prompt: 'Japanese anime visual, crisp cel shading, clean dynamic linework, vibrant animation key visual, Makoto Shinkai sky atmosphere' },
+      { id: 'm_manga_screentone', subCategory: 'manga_concept', label: '經典黑白日漫網點 (Manga Screentone & Ink)', prompt: 'black and white Japanese manga panel, G-pen dynamic ink linework, dot halftone screentone patterns, dramatic speed lines' },
+      { id: 'm_comic_book', subCategory: 'manga_concept', label: '美式經典漫畫 (American Comic Book)', prompt: 'classic American comic book art, bold black ink contour lines, Ben-Day dot color printing, dynamic graphic novel superhero framing' },
+      { id: 'm_shinkawa', subCategory: 'manga_concept', label: '新川洋司水墨機甲概念 (Yoji Shinkawa Style)', prompt: 'in the style of Yoji Shinkawa, dynamic ink splatter sketch, calligraphic brushstrokes, tactical mecha concept art, raw expressive ink bleed' },
+      { id: 'm_concept_matte', subCategory: 'manga_concept', label: '數位概念藝術厚塗 (Digital Matte Painting)', prompt: 'epic digital concept art, matte painting environment, cinematic atmospheric depth, photorealistic speedpainting brush textures' },
+      { id: 'm_pixel_art', subCategory: 'manga_concept', label: '16-bit 復古像素藝術 (Retro Pixel Art)', prompt: '16-bit pixel art, isometric retro gaming aesthetic, vibrant limited color palette, clean grid pixel alignment, nostalgic CRT glow' },
+
+      // 5. 版畫印刷與立體質感 (Printmaking, Craft & Optical 3D)
+      { id: 'm10', subCategory: 'print_craft_3d', label: '孔版印刷復古錯位 (Risograph Print)', prompt: 'Risograph print effect, halftone screen dot patterns, vibrant misregistered overlay spot inks, rough uncoated paper texture' },
+      { id: 'm11', subCategory: 'print_craft_3d', label: '絲網版畫印刷質感 (Silkscreen Print)', prompt: 'silkscreen printmaking texture, flat opaque ink overlays, distinct layered color blocks, screenprint edge grain' },
+      { id: 'm7', subCategory: 'print_craft_3d', label: '層次剪紙陰影浮雕 (Layered Papercut)', prompt: 'layered paper cut art, 3D papercraft depth, cast paper shadows, clean laser craft edges, dimensional shadowbox' },
+      { id: 'm6', subCategory: 'print_craft_3d', label: '定格黏土捏塑定格 (Claymation Stop-Motion)', prompt: 'claymation stop-motion aesthetic, sculpted polymer plasticine clay, visible subtle artisan fingerprints, soft studio spotlight' },
+      { id: 'm8', subCategory: 'print_craft_3d', label: '溫暖針織毛線紋理 (Chunky Knit Wool)', prompt: 'cozy chunky knit wool yarn texture, intricate woven textile weave, fuzzy tactile wool fibers, warm soft feeling' },
+      { id: 'm9', subCategory: 'print_craft_3d', label: '刺繡絲綢金線工藝 (Intricate Silk Embroidery)', prompt: 'intricate silk embroidery, raised satin stitch threads, shimmering metallic gold and silver threads, opulent brocade fabric' },
+      { id: 'm4', subCategory: 'print_craft_3d', label: '磨砂半透明玻璃 (Frosted Sea Glass)', prompt: 'frosted translucent sea glass, soft internal light refraction, matte blur, luminous diffusion' },
+      { id: 'm13', subCategory: 'print_craft_3d', label: '燙金箔浮雕細節 (Embossed Gold Foil)', prompt: 'embossed gold foil stamping, reflective gilded leaf accents, tactile luxury heavyweight cardstock' },
+      { id: 'm19', subCategory: 'print_craft_3d', label: 'Octane 頂級3D渲染 (Octane 3D PBR)', prompt: '3D Octane render, raytraced subsurface scattering, physically based rendering (PBR), Unreal Engine 5, cinematic photorealism' },
+      { id: 'm21', subCategory: 'print_craft_3d', label: '全息彩虹折射光膜 (Holographic Foil)', prompt: 'iridescent holographic foil texture, prismatic rainbow color shift, specular light reflections' }
     ]
   },
+
+  // ==========================================
+  // 7. 負面提示詞與純淨度 (Negative & Purity Controls)
+  // ==========================================
   negative: {
     id: 'negative',
     name: '負面提示詞與純淨度',
@@ -330,17 +780,17 @@ export const promptDatabase: Record<CategoryKey, CategoryData> = {
       { id: 'quality', name: '防結構崩壞與畫質控制', englishName: 'Anti-Defect & Quality', color: 'rose', desc: '防肢體崩壞、防模糊低清、防過曝死白、防塑料感' }
     ],
     items: [
-      { id: 'n1', subCategory: 'purity', label: '去除人物/無人景觀', prompt: 'human, people, person, crowd, silhouette of person' },
-      { id: 'n2', subCategory: 'purity', label: '純白極簡無雜物背景', prompt: 'cluttered background, complex patterns, dark shadows, noise' },
-      { id: 'n3', subCategory: 'purity', label: '去除浮水印與文字亂碼 (Mockup必選)', prompt: 'watermark, text, letters, typography, signature, logo, copyright notice, banner, sticker, label' },
-      { id: 'n4', subCategory: 'quality', label: '防止肢體崩壞畸形', prompt: 'extra limbs, bad anatomy, deformed fingers, mutated hands, poorly drawn hands, missing limbs' },
-      { id: 'n5', subCategory: 'quality', label: '防止畫面模糊與低解析度', prompt: 'blurry, low resolution, jpeg artifacts, pixelated, out of focus, low quality' },
-      { id: 'n6', subCategory: 'purity', label: '乾淨邊緣/防止邊框裁切', prompt: 'cropped, frame, border, split screen, out of frame' },
-      { id: 'n7', subCategory: 'quality', label: '防止過度曝光死白', prompt: 'overexposed, blown out highlights, extreme glare' },
-      { id: 'n8', subCategory: 'purity', label: '純淨無噪點雜訊 (合成必選)', prompt: 'grain, noise, dirty background, dust specks, chromatic aberration, scratches' },
-      { id: 'n9', subCategory: 'quality', label: '去除了無生氣的灰色調', prompt: 'muddy colors, desaturated, washed out, dull lighting' },
-      { id: 'n10', subCategory: 'quality', label: '去除非寫實塑料假人感', prompt: 'uncanny valley, plastic skin, doll face, cheap 3d render look, airbrushed' },
-      { id: 'n11', subCategory: 'purity', label: '孤立物體/無環境雜景', prompt: 'complex background, busy room, realistic environment, outdoors, ground texture' }
+      { id: 'n1', subCategory: 'purity', label: '去除人物/無人景觀', prompt: 'human, people, person, crowd, silhouette of person', isNegative: true },
+      { id: 'n2', subCategory: 'purity', label: '純白極簡無雜物背景', prompt: 'cluttered background, complex patterns, dark shadows, noise', isNegative: true },
+      { id: 'n3', subCategory: 'purity', label: '去除浮水印與文字亂碼 (Mockup必選)', prompt: 'watermark, text, letters, typography, signature, logo, copyright notice, banner, sticker, label', isNegative: true },
+      { id: 'n4', subCategory: 'quality', label: '防止肢體崩壞畸形', prompt: 'extra limbs, bad anatomy, deformed fingers, mutated hands, poorly drawn hands, missing limbs', isNegative: true },
+      { id: 'n5', subCategory: 'quality', label: '防止畫面模糊與低解析度', prompt: 'blurry, low resolution, jpeg artifacts, pixelated, out of focus, low quality', isNegative: true },
+      { id: 'n6', subCategory: 'purity', label: '乾淨邊緣/防止邊框裁切', prompt: 'cropped, frame, border, split screen, out of frame', isNegative: true },
+      { id: 'n7', subCategory: 'quality', label: '防止過度曝光死白', prompt: 'overexposed, blown out highlights, extreme glare', isNegative: true },
+      { id: 'n8', subCategory: 'purity', label: '純淨無噪點雜訊 (合成必選)', prompt: 'grain, noise, dirty background, dust specks, chromatic aberration, scratches', isNegative: true },
+      { id: 'n9', subCategory: 'quality', label: '去除了無生氣的灰色調', prompt: 'muddy colors, desaturated, washed out, dull lighting', isNegative: true },
+      { id: 'n10', subCategory: 'quality', label: '去除非寫實塑料假人感', prompt: 'uncanny valley, plastic skin, doll face, cheap 3d render look, airbrushed', isNegative: true },
+      { id: 'n11', subCategory: 'purity', label: '孤立物體/無環境雜景', prompt: 'complex background, busy room, realistic environment, outdoors, ground texture', isNegative: true }
     ]
   }
 };

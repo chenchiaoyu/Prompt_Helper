@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, ChevronUp, Check, Info, Globe, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Info, Globe, Sparkles, History } from 'lucide-react';
 import { PromptItem, SubCategory, subCategoryColorMap } from '../data/promptDatabase';
 
 interface SubCategoryAccordionProps {
@@ -80,6 +80,7 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
             {items.map((item) => {
               const isSelected = selectedPromptIds.has(item.id);
               const isNegative = item.isNegative;
+              const timeline = item.timeline;
 
               return (
                 <div
@@ -93,7 +94,7 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                       onTogglePrompt(item.id);
                     }
                   }}
-                  className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all relative cursor-pointer select-none group min-h-[86px] justify-between ${
+                  className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all relative cursor-pointer select-none group min-h-[92px] justify-between ${
                     isSelected
                       ? isNegative
                         ? 'bg-[#27272A] text-white border-[#27272A] ring-2 ring-red-500/50 shadow-sm'
@@ -101,13 +102,24 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                       : 'bg-[#FAFAFA] hover:bg-white hover:border-gray-400 border-[#E4E4E7] text-[#18181B]'
                   }`}
                 >
+                  {/* Top Bar inside Card */}
                   <div className="flex items-center justify-between w-full mb-1">
                     <div className="flex items-center gap-1.5 truncate pr-1">
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                        isSelected ? colorTheme.activeBg + ' ' + colorTheme.activeText : colorTheme.bg + ' ' + colorTheme.text
-                      }`}>
-                        {subCategory.name.slice(0, 4)}
-                      </span>
+                      {timeline ? (
+                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 ${
+                          isSelected ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                        }`}>
+                          <History className="w-2.5 h-2.5" />
+                          <span>{timeline.era}</span>
+                        </span>
+                      ) : (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                          isSelected ? colorTheme.activeBg + ' ' + colorTheme.activeText : colorTheme.bg + ' ' + colorTheme.text
+                        }`}>
+                          {subCategory.name.slice(0, 4)}
+                        </span>
+                      )}
+                      
                       <span className={`text-[10px] uppercase font-mono tracking-wider truncate ${
                         isSelected ? 'text-gray-300 opacity-80' : 'text-gray-400'
                       }`}>
@@ -134,7 +146,7 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                       <button
                         type="button"
                         onClick={(e) => onInspectPrompt(e, item)}
-                        title={`查看「${item.label}」完整英文提示詞`}
+                        title={`查看「${item.label}」完整英文提示詞與美術史解析`}
                         className={`w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                           isSelected
                             ? 'bg-white/20 hover:bg-white/35 text-white'
@@ -154,9 +166,21 @@ export const SubCategoryAccordion: React.FC<SubCategoryAccordionProps> = ({
                     </div>
                   </div>
                   
-                  <span className="font-semibold text-xs sm:text-sm leading-snug pr-1 line-clamp-2">
-                    {item.label}
-                  </span>
+                  {/* Card Title & Era Note */}
+                  <div className="w-full">
+                    <span className="font-semibold text-xs sm:text-sm leading-snug pr-1 line-clamp-2">
+                      {item.label}
+                    </span>
+                    {timeline && (
+                      <div className={`text-[10px] font-mono mt-0.5 flex items-center gap-1 ${
+                        isSelected ? 'text-amber-300/80' : 'text-amber-700/80'
+                      }`}>
+                        <span>{timeline.period}</span>
+                        <span>•</span>
+                        <span>{timeline.yearRange}</span>
+                      </div>
+                    )}
+                  </div>
 
                   <p className={`text-[10px] mt-1 line-clamp-1 font-mono ${
                     isSelected ? 'text-gray-300' : 'text-gray-400'

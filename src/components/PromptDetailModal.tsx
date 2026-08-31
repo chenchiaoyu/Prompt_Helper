@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Globe, Info, Sparkles, Plus, Minus, BookOpen, Compass } from 'lucide-react';
+import { X, Copy, Check, Globe, Info, Sparkles, Plus, Minus, BookOpen, Compass, History, Clock } from 'lucide-react';
 import { PromptItem } from '../data/promptDatabase';
 import { promptExplanations } from '../data/promptExplanations';
 import { CompositionDiagramViewer } from '../data/compositionExplanations';
@@ -28,6 +28,7 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
   const explanationInfo = promptExplanations[item.id];
   const shortDesc = explanationInfo?.desc || '精選專業美學提示詞標籤，精確導引 AI 算圖光影、構圖與材質渲染。';
   const diagram = explanationInfo?.diagram;
+  const timeline = item.timeline;
 
   const handleCopySingle = async () => {
     try {
@@ -66,7 +67,7 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
                 {item.label}
               </h3>
               <p className="text-[11px] text-gray-500 font-mono">
-                提示詞細節檢視與攝影解析 (Prompt Inspector)
+                提示詞細節檢視與攝影/美術史解析 (Prompt Inspector)
               </p>
             </div>
           </div>
@@ -82,7 +83,25 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
 
         {/* Scrollable Content */}
         <div className="p-5 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
-          {/* 1. 中文簡短說明 (20-30字解說) */}
+          {/* 1. 美術史時間軸脈絡 (如果該標籤有 timeline) */}
+          {timeline && (
+            <div className="p-3.5 bg-stone-900 text-stone-100 rounded-xl border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+                  <History className="w-3.5 h-3.5" />
+                  <span>美術史時間軸定位：{timeline.period}</span>
+                </div>
+                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {timeline.era} ({timeline.yearRange})
+                </span>
+              </div>
+              <p className="text-xs text-stone-300 leading-relaxed">
+                {timeline.historicalContext}
+              </p>
+            </div>
+          )}
+
+          {/* 2. 中文簡短說明 (20-30字解說) */}
           <div className="p-3.5 bg-indigo-50/70 border border-indigo-100/90 rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
               <BookOpen className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
@@ -93,7 +112,7 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
             </p>
           </div>
 
-          {/* 2. 視角與構圖專屬說明圖解 (SVG Diagram) */}
+          {/* 3. 視角與構圖專屬說明圖解 (SVG Diagram) */}
           {diagram && (
             <div>
               <div className="flex items-center gap-1.5 mb-2">
@@ -104,7 +123,7 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
             </div>
           )}
 
-          {/* 3. 完整 Prompt 英文語法 */}
+          {/* 4. 完整 Prompt 英文語法 */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
@@ -180,4 +199,3 @@ export const PromptDetailModal: React.FC<PromptDetailModalProps> = ({
     </div>
   );
 };
-

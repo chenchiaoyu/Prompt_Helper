@@ -37,6 +37,7 @@ import { MobilePromptModal } from './components/MobilePromptModal';
 import { ParameterPanel } from './components/ParameterPanel';
 import { PromptDetailModal } from './components/PromptDetailModal';
 import { UserGuideModal } from './components/UserGuideModal';
+import { ArtHistoryTimeline } from './components/ArtHistoryTimeline';
 
 const sidebarIconMap: Record<string, React.ElementType> = {
   Package,
@@ -57,6 +58,7 @@ export default function AestheticPromptMaster() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('commercialDesign');
   const [selectedPromptIds, setSelectedPromptIds] = useState<Set<string>>(new Set());
   const [subCategoryFilter, setSubCategoryFilter] = useState<string>('all');
+  const [timelinePeriodFilter, setTimelinePeriodFilter] = useState<string>('all');
   const [collapsedSubCategories, setCollapsedSubCategories] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [copied, setCopied] = useState(false);
@@ -146,12 +148,13 @@ export default function AestheticPromptMaster() {
   const handleSelectCategory = (catKey: CategoryKey) => {
     setSelectedCategory(catKey);
     setSubCategoryFilter('all');
+    setTimelinePeriodFilter('all');
     setSearchQuery('');
   };
 
   // All flat database items for search & prompt generation
   const allDatabaseItems = useMemo(() => {
-    const items: Array<{ id: string; label: string; prompt: string; categoryId: CategoryKey; isNegative: boolean; subCategory?: string }> = [];
+    const items: Array<{ id: string; label: string; prompt: string; categoryId: CategoryKey; isNegative: boolean; subCategory?: string; timeline?: any }> = [];
     Object.entries(promptDatabase).forEach(([catKey, category]) => {
       category.items.forEach(item => {
         items.push({
@@ -165,6 +168,52 @@ export default function AestheticPromptMaster() {
   }, []);
 
   const currentCategoryData = promptDatabase[selectedCategory];
+
+  // Timeline Period Item Counts for Classical Art
+  const classicalArtPeriodCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const items = promptDatabase.classicalArt?.items || [];
+    items.forEach(item => {
+      if (item.timeline) {
+        const order = item.timeline.order;
+        let periodId = '';
+        if (order === 1) periodId = 'medieval';
+        else if (order === 2) periodId = 'renaissance';
+        else if (order === 3) periodId = 'baroque_dutch';
+        else if (order === 4) periodId = 'rococo_romantic';
+        else if (order === 5) periodId = 'impressionism';
+        else if (order === 6) periodId = 'art_nouveau';
+        else if (order === 7) periodId = 'avant_garde';
+        else if (order === 8) periodId = 'contemporary';
+
+        if (periodId) {
+          counts[periodId] = (counts[periodId] || 0) + 1;
+        }
+      }
+    });
+    return counts;
+  }, []);
+
+  // Filtered items in category considering timeline filter
+  const filteredCategoryItems = useMemo(() => {
+    let items = currentCategoryData.items;
+    if (selectedCategory === 'classicalArt' && timelinePeriodFilter !== 'all') {
+      items = items.filter(item => {
+        if (!item.timeline) return false;
+        const order = item.timeline.order;
+        if (timelinePeriodFilter === 'medieval') return order === 1;
+        if (timelinePeriodFilter === 'renaissance') return order === 2;
+        if (timelinePeriodFilter === 'baroque_dutch') return order === 3;
+        if (timelinePeriodFilter === 'rococo_romantic') return order === 4;
+        if (timelinePeriodFilter === 'impressionism') return order === 5;
+        if (timelinePeriodFilter === 'art_nouveau') return order === 6;
+        if (timelinePeriodFilter === 'avant_garde') return order === 7;
+        if (timelinePeriodFilter === 'contemporary') return order === 8;
+        return true;
+      });
+    }
+    return items;
+  }, [currentCategoryData, selectedCategory, timelinePeriodFilter]);
 
   // Filtered subcategories for rendering
   const activeSubCategories = useMemo(() => {
@@ -608,6 +657,16 @@ export default function AestheticPromptMaster() {
           {/* Aesthetic Tags Section with Collapsible SubCategories   */}
           {/* ======================================================== */}
           <div className="space-y-3.5">
+            {/* Art History Timeline for Classical Art */}
+            {!searchQuery && selectedCategory === 'classicalArt' && (
+              <ArtHistoryTimeline
+                selectedPeriodId={timelinePeriodFilter}
+                onSelectPeriod={(periodId) => setTimelinePeriodFilter(periodId)}
+                totalItemsCount={currentCategoryData.items.length}
+                periodItemCounts={classicalArtPeriodCounts}
+              />
+            )}
+
             {/* SubCategory Toolbar / Filter */}
             {!searchQuery && currentCategoryData.subCategories && currentCategoryData.subCategories.length > 0 && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-2.5 rounded-xl border border-[#E4E4E7] shadow-2xs">
@@ -622,13 +681,17 @@ export default function AestheticPromptMaster() {
                         : 'bg-[#F4F4F5] text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    全部 ({currentCategoryData.items.length})
+                    全部 ({filteredCategoryItems.length})
                   </button>
 
                   {currentCategoryData.subCategories.map((subCat) => {
                     const isSubActive = subCategoryFilter === subCat.id;
-                    const itemsInSub = currentCategoryData.items.filter(i => i.subCategory === subCat.id);
+                    const itemsInSub = filteredCategoryItems.filter(i => i.subCategory === subCat.id);
                     const selectedInSub = itemsInSub.filter(i => selectedPromptIds.has(i.id)).length;
+
+                    if (itemsInSub.length === 0 && timelinePeriodFilter !== 'all') {
+                      return null;
+                    }
 
                     return (
                       <button
@@ -641,7 +704,7 @@ export default function AestheticPromptMaster() {
                             : 'bg-[#F4F4F5] text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        <span>{subCat.name.split('與')[0]}</span>
+                        <span>{subCat.name.split('與')[0].split(' (')[0]}</span>
                         <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                           isSubActive ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-600'
                         }`}>
@@ -745,7 +808,10 @@ export default function AestheticPromptMaster() {
               /* Grouped SubCategories with Collapsible UI */
               <div className="space-y-3">
                 {activeSubCategories.map((subCat) => {
-                  const subItems = currentCategoryData.items.filter(i => i.subCategory === subCat.id);
+                  const subItems = filteredCategoryItems.filter(i => i.subCategory === subCat.id);
+                  if (subItems.length === 0 && timelinePeriodFilter !== 'all') {
+                    return null;
+                  }
                   const isCollapsed = !!collapsedSubCategories[subCat.id];
 
                   return (
