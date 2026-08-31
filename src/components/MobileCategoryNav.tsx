@@ -43,7 +43,7 @@ export const MobileCategoryNav: React.FC<MobileCategoryNavProps> = ({
             }`}
           >
             <IconComponent className="w-3.5 h-3.5" />
-            <span>{cat.name.split('與')[0].split('與')[0].slice(0, 6)}</span>
+            <span>{cat.name}</span>
             {activeCount > 0 && (
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                 isActive ? 'bg-white text-black' : 'bg-black text-white'

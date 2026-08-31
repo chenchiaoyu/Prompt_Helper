@@ -29,7 +29,9 @@ import {
   midjourneyVersions,
   NoiseLevel,
   noiseOptions,
-  PromptItem
+  PromptItem,
+  artTimelinePeriods,
+  modernTimelinePeriods
 } from './data/promptDatabase';
 import { SubCategoryAccordion } from './components/SubCategoryAccordion';
 import { MobileCategoryNav } from './components/MobileCategoryNav';
@@ -55,7 +57,7 @@ export default function AestheticPromptMaster() {
   const [selectedMJVersion, setSelectedMJVersion] = useState('v8.2');
 
   // State: Categories, Search, Selection
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('commercialDesign');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('materials');
   const [selectedPromptIds, setSelectedPromptIds] = useState<Set<string>>(new Set());
   const [subCategoryFilter, setSubCategoryFilter] = useState<string>('all');
   const [timelinePeriodFilter, setTimelinePeriodFilter] = useState<string>('all');
@@ -176,18 +178,25 @@ export default function AestheticPromptMaster() {
     items.forEach(item => {
       if (item.timeline) {
         const order = item.timeline.order;
-        let periodId = '';
-        if (order === 1) periodId = 'medieval';
-        else if (order === 2) periodId = 'renaissance';
-        else if (order === 3) periodId = 'baroque_dutch';
-        else if (order === 4) periodId = 'rococo_romantic';
-        else if (order === 5) periodId = 'impressionism';
-        else if (order === 6) periodId = 'art_nouveau';
-        else if (order === 7) periodId = 'avant_garde';
-        else if (order === 8) periodId = 'contemporary';
+        const period = artTimelinePeriods.find(p => p.order === order);
+        if (period && period.id !== 'all') {
+          counts[period.id] = (counts[period.id] || 0) + 1;
+        }
+      }
+    });
+    return counts;
+  }, []);
 
-        if (periodId) {
-          counts[periodId] = (counts[periodId] || 0) + 1;
+  // Timeline Period Item Counts for Modern Design
+  const modernDesignPeriodCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const items = promptDatabase.modernDesign?.items || [];
+    items.forEach(item => {
+      if (item.timeline) {
+        const order = item.timeline.order;
+        const period = modernTimelinePeriods.find(p => p.order === order);
+        if (period && period.id !== 'all') {
+          counts[period.id] = (counts[period.id] || 0) + 1;
         }
       }
     });
@@ -198,19 +207,15 @@ export default function AestheticPromptMaster() {
   const filteredCategoryItems = useMemo(() => {
     let items = currentCategoryData.items;
     if (selectedCategory === 'classicalArt' && timelinePeriodFilter !== 'all') {
-      items = items.filter(item => {
-        if (!item.timeline) return false;
-        const order = item.timeline.order;
-        if (timelinePeriodFilter === 'medieval') return order === 1;
-        if (timelinePeriodFilter === 'renaissance') return order === 2;
-        if (timelinePeriodFilter === 'baroque_dutch') return order === 3;
-        if (timelinePeriodFilter === 'rococo_romantic') return order === 4;
-        if (timelinePeriodFilter === 'impressionism') return order === 5;
-        if (timelinePeriodFilter === 'art_nouveau') return order === 6;
-        if (timelinePeriodFilter === 'avant_garde') return order === 7;
-        if (timelinePeriodFilter === 'contemporary') return order === 8;
-        return true;
-      });
+      const targetPeriod = artTimelinePeriods.find(p => p.id === timelinePeriodFilter);
+      if (targetPeriod) {
+        items = items.filter(item => item.timeline?.order === targetPeriod.order);
+      }
+    } else if (selectedCategory === 'modernDesign' && timelinePeriodFilter !== 'all') {
+      const targetPeriod = modernTimelinePeriods.find(p => p.id === timelinePeriodFilter);
+      if (targetPeriod) {
+        items = items.filter(item => item.timeline?.order === targetPeriod.order);
+      }
     }
     return items;
   }, [currentCategoryData, selectedCategory, timelinePeriodFilter]);
@@ -537,7 +542,7 @@ export default function AestheticPromptMaster() {
                 >
                   <div className="flex items-center gap-2.5 truncate">
                     <IconComp className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{cat.name.split('與')[0]}</span>
+                    <span className="truncate">{cat.name}</span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {activeInCat > 0 && (
@@ -660,10 +665,33 @@ export default function AestheticPromptMaster() {
             {/* Art History Timeline for Classical Art */}
             {!searchQuery && selectedCategory === 'classicalArt' && (
               <ArtHistoryTimeline
+                periods={artTimelinePeriods}
                 selectedPeriodId={timelinePeriodFilter}
                 onSelectPeriod={(periodId) => setTimelinePeriodFilter(periodId)}
                 totalItemsCount={currentCategoryData.items.length}
                 periodItemCounts={classicalArtPeriodCounts}
+                title="古典美術流派時間軸導覽"
+                englishTitle="Classical Art Timeline"
+                subtitle="依年代時序探索自拜占庭、文藝復興、巴洛克至現代先鋒派的藝術語彙演進"
+                badgeText="古典年代脈絡"
+                themeColor="amber"
+              />
+            )}
+
+            {/* Modern Design Timeline for Modern & Contemporary Design */}
+            {!searchQuery && selectedCategory === 'modernDesign' && (
+              <ArtHistoryTimeline
+                periods={modernTimelinePeriods}
+                selectedPeriodId={timelinePeriodFilter}
+                onSelectPeriod={(periodId) => setTimelinePeriodFilter(periodId)}
+                totalItemsCount={currentCategoryData.items.length}
+                periodItemCounts={modernDesignPeriodCounts}
+                title="現代與當代設計流派時間軸導覽"
+                englishTitle="Modern Design Timeline"
+                subtitle="依時序探索自20世紀先鋒主義、中世紀現代、反叛波普至當代前衛設計思潮"
+                badgeText="現代設計思潮"
+                themeColor="violet"
+                iconType="shapes"
               />
             )}
 
@@ -842,7 +870,7 @@ export default function AestheticPromptMaster() {
       </div>
 
       {/* Bottom Output Bar: High-contrast Dark Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 h-20 sm:h-24 bg-[#014600] text-white flex items-center px-4 sm:px-8 z-40 border-t border-black/20 shadow-2xl">
+      <footer className="fixed bottom-0 left-0 right-0 h-20 sm:h-24 bg-black text-white flex items-center px-4 sm:px-8 z-40 border-t border-white/10 shadow-2xl">
         <div className="flex-1 pr-3 sm:pr-8 min-w-0">
           <div className="flex items-center gap-2 sm:gap-3 mb-0.5 sm:mb-1">
             <span className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest font-mono flex items-center gap-1.5">
