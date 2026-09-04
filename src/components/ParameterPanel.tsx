@@ -12,14 +12,25 @@ import {
   Trash2,
   Sparkles,
   Layers,
-  CircleDot
+  CircleDot,
+  Wand2,
+  Camera,
+  Paintbrush,
+  Box,
+  Palette,
+  Eye,
+  Lock,
+  ArrowRight
 } from 'lucide-react';
 import { 
   AIPlatform, 
   midjourneyVersions, 
   presetPalettes,
   NoiseLevel,
-  noiseOptions
+  noiseOptions,
+  ImageRefEditMode,
+  ImageRefPreserveLevel,
+  imageRefPresets
 } from '../data/promptDatabase';
 
 interface ParameterPanelProps {
@@ -41,6 +52,18 @@ interface ParameterPanelProps {
   setCustomNegative: (text: string) => void;
   mockupPureMode: boolean;
   setMockupPureMode: (val: boolean) => void;
+  // Targeted Image Edit Props
+  enableImageRefEdit: boolean;
+  setEnableImageRefEdit: (val: boolean) => void;
+  imageRefSource: string;
+  setImageRefSource: (val: string) => void;
+  imageRefEditMode: ImageRefEditMode;
+  setImageRefEditMode: (mode: ImageRefEditMode) => void;
+  imageRefDetail: string;
+  setImageRefDetail: (val: string) => void;
+  imageRefPreserveLevel: ImageRefPreserveLevel;
+  setImageRefPreserveLevel: (val: ImageRefPreserveLevel) => void;
+  // Composition Reference
   enableCompositionRef: boolean;
   setEnableCompositionRef: (val: boolean) => void;
   compositionImageUrl: string;
@@ -49,12 +72,14 @@ interface ParameterPanelProps {
   setCompositionStrength: (val: 'strict' | 'medium' | 'loose') => void;
   compositionGuidanceType: 'structural_layout' | 'grid_perspective' | 'silhouettes_framing';
   setCompositionGuidanceType: (val: 'structural_layout' | 'grid_perspective' | 'silhouettes_framing') => void;
+  // Color Palette
   enableColorPalette: boolean;
   setEnableColorPalette: (val: boolean) => void;
   customHexColors: string[];
   setCustomHexColors: React.Dispatch<React.SetStateAction<string[]>>;
   colorGradingIntensity: 'dominant' | 'accent' | 'atmospheric';
   setColorGradingIntensity: (val: 'dominant' | 'accent' | 'atmospheric') => void;
+  // Noise Controller
   noiseLevel: NoiseLevel;
   setNoiseLevel: (level: NoiseLevel) => void;
 }
@@ -76,6 +101,16 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
   setImageWeight,
   customNegative,
   setCustomNegative,
+  enableImageRefEdit,
+  setEnableImageRefEdit,
+  imageRefSource,
+  setImageRefSource,
+  imageRefEditMode,
+  setImageRefEditMode,
+  imageRefDetail,
+  setImageRefDetail,
+  imageRefPreserveLevel,
+  setImageRefPreserveLevel,
   enableCompositionRef,
   setEnableCompositionRef,
   compositionImageUrl,
@@ -379,6 +414,349 @@ export const ParameterPanel: React.FC<ParameterPanelProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Targeted Image Modification (定向改圖 / 圖片局部修改) Card */}
+        <div className="bg-white border border-[#E4E4E7] rounded-xl p-4 shadow-xs space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center shrink-0">
+                <Wand2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-bold text-[#18181B]">
+                    以圖改圖 / 局部定向修改 (Targeted Image Modification)
+                  </h3>
+                  {enableImageRefEdit && (
+                    <span className="text-[10px] bg-purple-100 text-purple-800 font-semibold px-2 py-0.5 rounded border border-purple-200 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                      {imageRefEditMode === 'color' && '🎨 只改顏色與光影'}
+                      {imageRefEditMode === 'angle' && '📐 只改拍攝角度'}
+                      {imageRefEditMode === 'background' && '🏞️ 只改背景環境'}
+                      {imageRefEditMode === 'material' && '🧱 只改材質工藝'}
+                      {imageRefEditMode === 'style' && '🎭 只改藝術風格'}
+                      {imageRefEditMode === 'custom' && '✏️ 自訂局部修改'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-0.5">
+                  指定基準參考圖片（網址或檔名代號），嚴格鎖定主體特徵，僅精準置換顏色、視角角度、背景或材質
+                </p>
+              </div>
+            </div>
+            
+            <label className="relative inline-flex items-center cursor-pointer shrink-0 self-start sm:self-center">
+              <input
+                type="checkbox"
+                checked={enableImageRefEdit}
+                onChange={(e) => setEnableImageRefEdit(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-purple-600"></div>
+            </label>
+          </div>
+
+          {enableImageRefEdit ? (
+            <div className="space-y-4 pt-3 border-t border-[#E4E4E7]">
+              {/* 1. Image Source Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                    <span>1. 基準參考圖 (圖片 URL 網址 或 檔案名稱/代號)</span>
+                  </label>
+                  <span className="text-[10px] text-gray-400 font-mono">支援 URL / Discord Attachment / 檔名代號</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="例如：https://myimage.jpg 或 character_ref.png 或 [Image 1]"
+                    value={imageRefSource}
+                    onChange={(e) => setImageRefSource(e.target.value)}
+                    className="w-full bg-[#F4F4F5] border border-[#E4E4E7] rounded-lg px-3 py-2 text-xs text-[#18181B] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-600 font-mono"
+                  />
+                </div>
+                {/* Quick Source Examples */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[10px] text-gray-400">快速填入範例：</span>
+                  <button
+                    type="button"
+                    onClick={() => setImageRefSource('https://images.unsplash.com/photo-1534528741775-53994a69daeb')}
+                    className="text-[10px] bg-[#F4F4F5] hover:bg-gray-200 border border-[#E4E4E7] px-2 py-0.5 rounded text-gray-600 transition"
+                  >
+                    人像範例 URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageRefSource('product_hero_v1.png')}
+                    className="text-[10px] bg-[#F4F4F5] hover:bg-gray-200 border border-[#E4E4E7] px-2 py-0.5 rounded text-gray-600 transition"
+                  >
+                    產品檔名: product_hero_v1.png
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageRefSource('character_main.png')}
+                    className="text-[10px] bg-[#F4F4F5] hover:bg-gray-200 border border-[#E4E4E7] px-2 py-0.5 rounded text-gray-600 transition"
+                  >
+                    角色檔名: character_main.png
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Target Modification Mode Selector */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-gray-700 block">
+                  2. 選擇定向修改目標（其他未選部位將嚴格鎖定保留）
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('color');
+                      if (!imageRefDetail) setImageRefDetail('vibrant cyberpunk neon duotone, glowing cyan and electric magenta color grading');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'color'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Palette className="w-3.5 h-3.5 text-amber-400" />
+                      {imageRefEditMode === 'color' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">只改顏色光影</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'color' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      鎖定形狀僅重調色彩
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('angle');
+                      if (!imageRefDetail) setImageRefDetail('exact 90-degree profile side view, crisp silhouette alignment');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'angle'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Camera className="w-3.5 h-3.5 text-sky-400" />
+                      {imageRefEditMode === 'angle' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">只改相機角度</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'angle' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      同主體換視角/俯仰
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('background');
+                      if (!imageRefDetail) setImageRefDetail('seamless pure white minimalist studio backdrop, soft diffused lightbox');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'background'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                      {imageRefEditMode === 'background' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">只改背景環境</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'background' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      主體不動置換場景
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('material');
+                      if (!imageRefDetail) setImageRefDetail('matte anodized space-gray aluminum metal, precision CNC chamfered edges');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'material'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Box className="w-3.5 h-3.5 text-amber-500" />
+                      {imageRefEditMode === 'material' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">只改材質質感</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'material' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      同造型轉金屬/玻璃
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('style');
+                      if (!imageRefDetail) setImageRefDetail('classical oil painting with expressive impasto brushstrokes');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'style'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Paintbrush className="w-3.5 h-3.5 text-rose-400" />
+                      {imageRefEditMode === 'style' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">只改藝術風格</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'style' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      保留構圖轉換畫風
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageRefEditMode('custom');
+                      if (!imageRefDetail) setImageRefDetail('change subject outfit to dark navy tailored blazer, holding a modern tablet device');
+                    }}
+                    className={`p-2 rounded-lg border text-left transition flex flex-col gap-1 cursor-pointer ${
+                      imageRefEditMode === 'custom'
+                        ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs'
+                        : 'bg-[#F4F4F5] hover:bg-gray-200/80 border-transparent text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      {imageRefEditMode === 'custom' && <CircleDot className="w-2.5 h-2.5 text-purple-400" />}
+                    </div>
+                    <span className="text-xs font-bold">自訂局部指令</span>
+                    <span className={`text-[10px] leading-tight ${imageRefEditMode === 'custom' ? 'text-gray-300' : 'text-gray-400'}`}>
+                      自由指定修改部位
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 3. Detail Input & Quick Presets */}
+              <div className="space-y-2 bg-[#F4F4F5]/60 border border-[#E4E4E7] rounded-xl p-3.5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="text-[11px] font-bold text-gray-700 flex items-center gap-1.5">
+                    <span>3. 定向修改詳細指令描述 (Target Modification Detail)</span>
+                  </label>
+                  {imageRefEditMode === 'color' && customHexColors.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const hexStr = customHexColors.join(', ');
+                        setImageRefDetail(`dominated by hex color palette (${hexStr}), precise color grading, maintaining original shapes and forms`);
+                      }}
+                      className="text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer transition"
+                    >
+                      <Palette className="w-3 h-3" />
+                      帶入下方自訂色票 ({customHexColors.join(', ')})
+                    </button>
+                  )}
+                </div>
+
+                {/* Preset Chips */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-gray-500 font-medium shrink-0">精選預設點選：</span>
+                  {imageRefPresets
+                    .filter(p => p.mode === imageRefEditMode)
+                    .map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => setImageRefDetail(preset.detail)}
+                        className={`text-[11px] px-2.5 py-1 rounded-md border font-medium transition cursor-pointer ${
+                          imageRefDetail === preset.detail
+                            ? 'bg-[#18181B] text-white border-[#18181B] shadow-2xs font-semibold'
+                            : 'bg-white hover:bg-gray-100 border-[#E4E4E7] text-gray-700'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                </div>
+
+                {/* Textarea for fine-tuning */}
+                <textarea
+                  rows={2}
+                  value={imageRefDetail}
+                  onChange={(e) => setImageRefDetail(e.target.value)}
+                  placeholder="輸入或微調具體修改描述（英文最佳，例如：exact 90-degree side profile view, preserve facial features）"
+                  className="w-full bg-white border border-[#E4E4E7] rounded-lg px-3 py-2 text-xs text-[#18181B] placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-600 font-mono resize-y"
+                />
+              </div>
+
+              {/* 4. Subject Preservation Fidelity Weight */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center pt-1">
+                <div>
+                  <label className="text-[11px] font-bold text-gray-700 flex items-center gap-1 mb-1">
+                    <Lock className="w-3 h-3 text-purple-600" />
+                    <span>4. 原圖主體保真與特徵鎖定程度 (Preservation Level)</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setImageRefPreserveLevel('strict')}
+                      className={`px-2 py-1.5 text-[11px] rounded-lg border transition text-center cursor-pointer ${
+                        imageRefPreserveLevel === 'strict'
+                          ? 'bg-[#18181B] text-white border-[#18181B] font-bold shadow-2xs'
+                          : 'bg-[#F4F4F5] text-gray-700 border-transparent hover:bg-gray-200'
+                      }`}
+                    >
+                      🔒 嚴格鎖定 (--iw 2.0)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageRefPreserveLevel('balanced')}
+                      className={`px-2 py-1.5 text-[11px] rounded-lg border transition text-center cursor-pointer ${
+                        imageRefPreserveLevel === 'balanced'
+                          ? 'bg-[#18181B] text-white border-[#18181B] font-bold shadow-2xs'
+                          : 'bg-[#F4F4F5] text-gray-700 border-transparent hover:bg-gray-200'
+                      }`}
+                    >
+                      ⚖️ 平衡調和 (--iw 1.5)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageRefPreserveLevel('creative')}
+                      className={`px-2 py-1.5 text-[11px] rounded-lg border transition text-center cursor-pointer ${
+                        imageRefPreserveLevel === 'creative'
+                          ? 'bg-[#18181B] text-white border-[#18181B] font-bold shadow-2xs'
+                          : 'bg-[#F4F4F5] text-gray-700 border-transparent hover:bg-gray-200'
+                      }`}
+                    >
+                      💡 寬鬆創意 (--iw 0.8)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Prompt Preview Snippet */}
+                <div className="bg-[#18181B] text-white rounded-lg p-2.5 text-[10px] font-mono space-y-1">
+                  <div className="flex items-center justify-between text-gray-400">
+                    <span className="font-bold text-purple-400">即時注入修改指令標籤</span>
+                    <span>自動附加防護 --no 詞</span>
+                  </div>
+                  <div className="text-gray-200 truncate">
+                    {imageRefSource ? `${imageRefSource} ` : '[參考圖] '}
+                    [Targeted {imageRefEditMode.toUpperCase()}: {imageRefDetail || '...'}, preserve other features]
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-2.5 text-center text-xs text-gray-400 border-t border-[#E4E4E7]">
+              開啟後可指定參考圖（URL 或檔名），只鎖定修改特定的顏色、視角角度、背景或材質，其餘特徵完整保留。
+            </div>
+          )}
         </div>
 
         {/* Composition Reference, Color Palette & Noise Controller Grid */}

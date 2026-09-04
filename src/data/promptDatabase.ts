@@ -44,6 +44,64 @@ export type CategoryKey =
 
 export type AIPlatform = "midjourney" | "universal";
 
+export type ImageRefEditMode = 'color' | 'angle' | 'background' | 'material' | 'style' | 'custom';
+export type ImageRefPreserveLevel = 'strict' | 'balanced' | 'creative';
+
+export interface ImageRefPreset {
+  id: string;
+  label: string;
+  detail: string;
+  mode: ImageRefEditMode;
+}
+
+export const imageRefPresets: ImageRefPreset[] = [
+  // Color
+  { id: 'c_cool', mode: 'color', label: '日系低飽和冷色', detail: 'muted Japanese cool tone, subtle low saturation palette, calm natural chromatic gradient' },
+  { id: 'c_cyber', mode: 'color', label: '賽博霓虹粉藍', detail: 'vibrant cyberpunk neon duotone, glowing cyan and electric magenta color grading, high contrast lighting' },
+  { id: 'c_amber', mode: 'color', label: '復古暖金琥珀', detail: 'vintage warm amber and sepia palette, golden hour nostalgic color temperature, rich earthy undertones' },
+  { id: 'c_mono', mode: 'color', label: '極簡黑白高對比', detail: 'striking black and white monochrome, deep rich shadows, crisp highlights, timeless grayscale grading' },
+  { id: 'c_morandi', mode: 'color', label: '莫蘭迪灰雅調色', detail: 'elegant Morandi color palette, dusty rose, sage green, warm taupe, sophisticated soft harmony' },
+  { id: 'c_gold', mode: 'color', label: '香檳奢華黑金', detail: 'luxurious obsidian black and champagne gold palette, reflective metallic accents, premium editorial color grading' },
+  
+  // Angle
+  { id: 'a_profile', mode: 'angle', label: '90° 正側面視角 (Profile)', detail: 'exact 90-degree profile side view, crisp silhouette alignment, flat plane camera angle' },
+  { id: 'a_threequarter', mode: 'angle', label: '45° 俯角半側面 (3/4 Angle)', detail: '3/4 angled isometric perspective, dynamic spatial depth, elevated 45-degree camera viewpoint' },
+  { id: 'a_topdown', mode: 'angle', label: '高空垂直俯瞰 (Bird\'s Eye)', detail: 'direct 90-degree top-down bird\'s-eye view, flat lay perspective, planar geometric overview' },
+  { id: 'a_lowangle', mode: 'angle', label: '戲劇性極致仰拍 (Worm\'s Eye)', detail: 'dramatic ground-level low-angle worm\'s-eye perspective, towering imposing scale, upward camera tilt' },
+  { id: 'a_macro', mode: 'angle', label: '微距局部特寫 (Macro Close-up)', detail: 'extreme macro close-up shot, razor-sharp localized focal detail, shallow depth of field' },
+  { id: 'a_wide', mode: 'angle', label: '電影級超廣角 (Cinematic Wide)', detail: 'cinematic ultra-wide angle view, expansive panoramic depth, 16mm lens perspective' },
+  { id: 'a_dutch', mode: 'angle', label: '荷蘭式動態傾斜 (Dutch Tilt)', detail: 'dynamic Dutch angle composition, 25-degree tilted camera horizon, energetic visual tension' },
+
+  // Background
+  { id: 'b_studio', mode: 'background', label: '極簡純白棚拍', detail: 'seamless pure white minimalist studio backdrop, soft diffused commercial lightbox illumination' },
+  { id: 'b_interior', mode: 'background', label: '現代採光建築室內', detail: 'architectural modern interior, large floor-to-ceiling sunlit windows, warm ambient daylight' },
+  { id: 'b_forest', mode: 'background', label: '夕陽自然松林秘境', detail: 'lush natural pine forest landscape, golden hour sunset rays filtering through trees, organic greenery' },
+  { id: 'b_cyber_street', mode: 'background', label: '未來賽博霓虹雨夜', detail: 'futuristic cyberpunk city street at night, wet reflective asphalt, glowing neon signage reflections' },
+  { id: 'b_bokeh', mode: 'background', label: '夢幻柔焦光斑背景', detail: 'smooth creamy bokeh background, soft circular light orbs, clean uncluttered ambient blur' },
+  { id: 'b_space', mode: 'background', label: '浩瀚深空星雲宇宙', detail: 'deep cosmic nebula backdrop, twinkling distant stars, ethereal galactic atmosphere' },
+
+  // Material
+  { id: 'm_metal', mode: 'material', label: '消光磨砂金屬', detail: 'matte anodized space-gray aluminum metal, precision CNC chamfered edges, satin anti-fingerprint surface' },
+  { id: 'm_glass', mode: 'material', label: '半透明磨砂琉璃', detail: 'semi-translucent frosted glass material, soft light refraction, milky smooth subsurface scattering' },
+  { id: 'm_clay', mode: 'material', label: '手作粗糙陶藝', detail: 'handmade rustic ceramic clay texture, raw organic glaze, tactile terracotta stoneware craft' },
+  { id: 'm_marble', mode: 'material', label: '奢華拋光大理石', detail: 'luxurious polished white Carrara marble, subtle natural grey veining, high-gloss reflective finish' },
+  { id: 'm_leather', mode: 'material', label: '復古做舊皮革', detail: 'distressed vintage full-grain leather, tactile pebble texture, hand-stitched craft patina' },
+  { id: 'm_chrome', mode: 'material', label: '未來液態鉻銀', detail: 'futuristic fluid liquid chrome, high-reflectivity mirror surface, organic melting metallic flow' },
+
+  // Style
+  { id: 's_oil', mode: 'style', label: '古典油畫厚塗筆觸', detail: 'classical oil painting with expressive impasto brushstrokes, layered rich pigments, museum canvas texture' },
+  { id: 's_anime', mode: 'style', label: '日系動漫賽璐珞', detail: 'high-end modern anime cel-shaded keyframe art, crisp clean line work, vibrant cinematic anime coloring' },
+  { id: 's_bauhaus', mode: 'style', label: '包浩斯幾何海報', detail: 'Bauhaus modernist graphic poster style, bold primary geometric shapes, Swiss grid layout' },
+  { id: 's_lineart', mode: 'style', label: '極簡鋼筆線條', detail: 'minimalist black ink contour line illustration, clean continuous strokes, elegant negative space' },
+  { id: 's_clay3d', mode: 'style', label: '3D 黏土幾何渲染', detail: 'soft 3D claymorphism render, matte tactile clay surfaces, playful rounded geometry, studio clay lighting' },
+  { id: 's_film80s', mode: 'style', label: '80 年代膠卷質感', detail: 'authentic 1980s 35mm film photograph aesthetic, warm analog color cast, natural organic film grain' },
+
+  // Custom Examples
+  { id: 'cust_outfit', mode: 'custom', label: '改裝換服裝', detail: 'change subject outfit to dark navy tailored blazer, holding a modern tablet device' },
+  { id: 'cust_water', mode: 'custom', label: '加產品水滴與透明罩', detail: 'add clear fresh water droplets condensing on the surface, encased in crystal clear acrylic case' },
+  { id: 'cust_weather', mode: 'custom', label: '改為飄雪冬夜', detail: 'transform clear sky into a peaceful snowy winter evening with soft falling snowflakes and glowing warm lights' }
+];
+
 export type NoiseLevel = "none" | "clean" | "subtle" | "medium" | "heavy" | "dither";
 
 export interface NoiseOption {

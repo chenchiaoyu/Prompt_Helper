@@ -26,12 +26,14 @@ import {
   CategoryKey, 
   AIPlatform, 
   promptDatabase, 
-  midjourneyVersions,
-  NoiseLevel,
-  noiseOptions,
-  PromptItem,
-  artTimelinePeriods,
-  modernTimelinePeriods
+  midjourneyVersions, 
+  NoiseLevel, 
+  noiseOptions, 
+  PromptItem, 
+  artTimelinePeriods, 
+  modernTimelinePeriods,
+  ImageRefEditMode,
+  ImageRefPreserveLevel
 } from './data/promptDatabase';
 import { SubCategoryAccordion } from './components/SubCategoryAccordion';
 import { MobileCategoryNav } from './components/MobileCategoryNav';
@@ -76,6 +78,13 @@ export default function AestheticPromptMaster() {
   const [chaosValue, setChaosValue] = useState('0');
   const [customNegative, setCustomNegative] = useState('');
   const [mockupPureMode, setMockupPureMode] = useState(false);
+
+  // State: Targeted Image Modification (以圖改圖 / 局部定向修改)
+  const [enableImageRefEdit, setEnableImageRefEdit] = useState(false);
+  const [imageRefSource, setImageRefSource] = useState('');
+  const [imageRefEditMode, setImageRefEditMode] = useState<ImageRefEditMode>('color');
+  const [imageRefDetail, setImageRefDetail] = useState('vibrant cyberpunk neon duotone, glowing cyan and electric magenta color grading');
+  const [imageRefPreserveLevel, setImageRefPreserveLevel] = useState<ImageRefPreserveLevel>('strict');
 
   // State: Noise & Grain Controller
   const [noiseLevel, setNoiseLevel] = useState<NoiseLevel>('none');
@@ -130,6 +139,8 @@ export default function AestheticPromptMaster() {
     setSubjectText('');
     setCustomNegative('');
     setMockupPureMode(false);
+    setEnableImageRefEdit(false);
+    setImageRefSource('');
     setNoiseLevel('none');
     setEnableCompositionRef(false);
     setCompositionImageUrl('');
@@ -234,6 +245,42 @@ export default function AestheticPromptMaster() {
     let pCount = 0;
     let nCount = 0;
 
+    // 0. Targeted Image Edit Reference (以圖改圖 / 局部定向修改)
+    let imageRefPrefix = '';
+    if (enableImageRefEdit && imageRefSource.trim()) {
+      imageRefPrefix = `${imageRefSource.trim()} `;
+      
+      let editDirective = '';
+      let editNegativeGuard = '';
+      
+      const detailText = imageRefDetail.trim() || 'custom modification';
+      
+      if (imageRefEditMode === 'color') {
+        editDirective = `[Targeted Edit - Color/Lighting]: modify color palette and lighting grading to (${detailText}), strictly preserving original subject anatomy, facial identity, outline silhouette, and structural geometry`;
+        editNegativeGuard = 'altering facial features, changing subject identity, deformed silhouette, altered proportions, distorted anatomy';
+      } else if (imageRefEditMode === 'angle') {
+        editDirective = `[Targeted Edit - Camera Angle]: change camera viewpoint and perspective to (${detailText}), maintaining identical subject identity, facial features, apparel, and design fidelity`;
+        editNegativeGuard = 'changing subject identity, different person, altering facial structure, different product geometry, distorted pose';
+      } else if (imageRefEditMode === 'background') {
+        editDirective = `[Targeted Edit - Background]: seamlessly replace background environment with (${detailText}), keeping foreground subject, pose, edges, and lighting interaction strictly intact`;
+        editNegativeGuard = 'modifying foreground subject, altering person, distorted product shape, blurry foreground edges';
+      } else if (imageRefEditMode === 'material') {
+        editDirective = `[Targeted Edit - Material/Texture]: transform surface material and CMF finish into (${detailText}), strictly preserving original product silhouette, proportions, and mechanical details`;
+        editNegativeGuard = 'changing overall shape, altering core dimensions, deformed structure, missing design details';
+      } else if (imageRefEditMode === 'style') {
+        editDirective = `[Targeted Edit - Artistic Style]: reinterpret visual style and medium as (${detailText}), maintaining original composition layout and core subject recognition`;
+        editNegativeGuard = 'unrecognizable subject, altered core pose, losing subject identity';
+      } else {
+        editDirective = `[Targeted Edit - Custom Inpaint]: ${detailText}, strictly preserving all other unmentioned elements and subject fidelity`;
+        editNegativeGuard = 'unwanted alterations to untouched areas, collateral distortion, unintended structural deformation';
+      }
+
+      positiveTokens.push(editDirective);
+      negativeTokens.push(editNegativeGuard);
+      pCount++;
+      nCount++;
+    }
+
     // 1. Composition Reference
     let compPrefix = '';
     if (enableCompositionRef && compositionImageUrl.trim()) {
@@ -323,7 +370,10 @@ export default function AestheticPromptMaster() {
 
     // Output Generation
     if (activeEngine === 'midjourney') {
-      let result = compPrefix + positiveTokens.join(', ');
+      // Midjourney prompt assembly
+      const combinedPrefix = (imageRefPrefix + compPrefix).trim();
+      let result = combinedPrefix ? `${combinedPrefix} ` : '';
+      result += positiveTokens.join(', ');
 
       if (aspectRatio && aspectRatio !== 'default') {
         result += ` --ar ${aspectRatio}`;
@@ -334,7 +384,11 @@ export default function AestheticPromptMaster() {
         result += ` ${currentVerObj.param}`;
       }
 
-      if (imageWeight && imageWeight !== '1.0') {
+      // Determine appropriate image weight --iw
+      if (enableImageRefEdit && imageRefSource.trim()) {
+        const iwValue = imageRefPreserveLevel === 'strict' ? '2.0' : imageRefPreserveLevel === 'balanced' ? '1.5' : '0.8';
+        result += ` --iw ${imageWeight && imageWeight !== '1.0' ? imageWeight : iwValue}`;
+      } else if (imageWeight && imageWeight !== '1.0') {
         result += ` --iw ${imageWeight}`;
       }
 
@@ -361,6 +415,9 @@ export default function AestheticPromptMaster() {
       };
     } else {
       const sentences: string[] = [];
+      if (enableImageRefEdit && imageRefSource.trim()) {
+        sentences.push(`Based on reference "${imageRefSource.trim()}", perform targeted modification: modify the ${imageRefEditMode} to "${imageRefDetail.trim()}" while strictly preserving all other subject features, identity, outline silhouette, and structural geometry.`);
+      }
       if (positiveTokens.length > 0) {
         sentences.push(`A high quality visual of ${positiveTokens.join(', ')}.`);
       }
@@ -390,6 +447,11 @@ export default function AestheticPromptMaster() {
     allDatabaseItems,
     mockupPureMode,
     noiseLevel,
+    enableImageRefEdit,
+    imageRefSource,
+    imageRefEditMode,
+    imageRefDetail,
+    imageRefPreserveLevel,
     enableCompositionRef,
     compositionImageUrl,
     compositionStrength,
@@ -640,6 +702,16 @@ export default function AestheticPromptMaster() {
             setCustomNegative={setCustomNegative}
             mockupPureMode={mockupPureMode}
             setMockupPureMode={setMockupPureMode}
+            enableImageRefEdit={enableImageRefEdit}
+            setEnableImageRefEdit={setEnableImageRefEdit}
+            imageRefSource={imageRefSource}
+            setImageRefSource={setImageRefSource}
+            imageRefEditMode={imageRefEditMode}
+            setImageRefEditMode={setImageRefEditMode}
+            imageRefDetail={imageRefDetail}
+            setImageRefDetail={setImageRefDetail}
+            imageRefPreserveLevel={imageRefPreserveLevel}
+            setImageRefPreserveLevel={setImageRefPreserveLevel}
             enableCompositionRef={enableCompositionRef}
             setEnableCompositionRef={setEnableCompositionRef}
             compositionImageUrl={compositionImageUrl}
